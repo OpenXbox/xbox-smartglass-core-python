@@ -6,7 +6,7 @@ from setuptools import setup
 
 setup(
     name="xbox-smartglass-core",
-    version="0.9.1",
+    version="1.0.0",
     author="OpenXbox",
     description="A library to interact with the Xbox One gaming console via the SmartGlass protocol.",
     long_description=open('README.rst').read() + '\n\n' + open('HISTORY.rst').read(),
