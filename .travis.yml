@@ -2,19 +2,17 @@ language: python
 
 python:
   - '3.6'
-
 install:
   - pip install -U tox-travis
   - pip install -e .[dev]
 
 script: tox
-
 deploy:
   provider: pypi
   distributions: sdist bdist_wheel
   user: OpenXbox
   password:
-    secure: n4RqLWPdxInJowE3hFLQkWs+OT5Jjxy9YhWuDdKu8Fme36FSPUyb/kFtHOzxeUDDw3LfXlBQicTR+wMygwh9P+vOwgpGke76J6QML3UCa1oyx5O6lHjY12ebgDFLZssaA/ZJPp6smLHmVWI8BO3gK8HP3rLARAEHis21Otztoe37qjZigt2xJyLzbd61iWTTXGvn2FWK12e/Sw/PIMk9PJ6+OpeE0IEnXDu2z91wFiZH917hI2WzEweHDoDCl1sHLjkfOAkHtMZegd9eWDeIj4/GeXFgd68o7Q15vNgUBKWNXOgyabZrcV545aw1f9jKPuwvd9Gj0gO4x58AmIEilPf49REsGt8/I56CE6EoWW7f1kCZr5SKfGhkCHRmWqzkC3yV01afkLaxQsqYmUalMrHOrnBHDp/ieeS6/Kg8kHJp43MdYcBbjo9P+vd1cW10gA2F5QOE+aCeuiJvFHTsBYqQrQl4ractYAKfWJsVCQVG1RR0B/dUc5qFCr535m3Hy7dr+dCdEzsLc3AFYB5cMnDolmOMH+DpPrd7DN/ecN6FbrqKydaOQmuTnTnI/Il1KwoMyav15bkAt1Igo6zxcpTh8uuiMZNXOSX+fMeRTB7kJpyLlY4PVj8rwS411y/tB0IB4nmrq7YdXmsG/qUSWJ1yu5lydCrKDuXv5repVjU=
+    secure: QHIV1oYKY/MJAWW+75ZdW4sHiXFhXjdLRCEOIGJHrMhmtTMm5PLJwaPmgQshsz6qlIYzGcDEV4rzoE6UJK3jj18iL+XweOabMgU8beP3AeL9OECaMCbd7sU7PqpSU31BgcTUJ3WeCnsPsRtk/qP0CTsrbVSHysXtsxluVDxM5q6D9hMPTFcdy98kwA5wT78M62pofTdDew7Nf03upr8KmUeni8oPTgdBUnV8wwCWIZVy6FQ/H+ICU4172TtzDG0rn+uam0BZ8G7oWsX/kVcMU7svd6NcIcl1b+QTu553iyeN4fn/PS22WjfLRInF+FsN414pXPOYUUZbVAKvrovqPjFGYFALlEJfGOcbyIECesEMXVXlDphi578ictjx3eIYJ94dNI5aJZ74r3IdV9miAsA9WDzKVBuejcZSCAz+PGgcvPKeVUIoYE03pheTW+l6gOOOIl3Szko9+cwqRi/j2cC/1WhGO8JSCE1qJnh7YoOpRJ9hqahW6p0zfmZZoVgXSgGzYtZh6CMxCwyzzWA9k+bO6QG5Gq3ul7WVED9mqqC1Ks4wDujP3dt1gT5TGZSYH6fIbWPXIIWoK0XfLAdtRI3jpUXJlloIV0ZmnpkM+5ZZkH4hTUDS1KHqLE1KIyXbddbjnV3to19n5Yb25bO7jnTgGyoVNyUrpe0IKZUL7Ug=
   on:
     tags: true
     branch: master
