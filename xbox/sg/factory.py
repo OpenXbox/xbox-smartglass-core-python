@@ -284,7 +284,7 @@ def start_channel(channel_request_id, title_id, service, activity_id,
     Args:
         channel_request_id (int): Incrementing Channel Request Id.
         title_id (int): Title Id, usually 0.
-        service (:class:`MessageTarget): Member of :class:`MessageTarget`.
+        service (:class:`MessageTarget`): Member of :class:`MessageTarget`.
         activity_id (int): Activity Id, usually 0.
 
     Returns:

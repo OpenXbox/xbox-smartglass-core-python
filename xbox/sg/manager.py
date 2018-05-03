@@ -292,7 +292,7 @@ class MediaManager(Manager):
         Enabled MediaCommands bitmask
 
         Returns:
-            :class:`MediaControlCommand: Bitmask of enabled commands
+            :class:`MediaControlCommand`: Bitmask of enabled commands
         """
         if self.media_state:
             return self.media_state.enabled_commands
@@ -487,14 +487,18 @@ class TextManager(Manager):
     @property
     def got_active_session(self):
         """
+        Check whether a text session is active
+        
         Returns:
-            bool: `True` if any text session is active, `False` otherwise
+            bool: Returns `True` if any text session is active, `False` otherwise
         """
         return self.session_config is not None
 
     @property
     def current_text_version(self):
         """
+        Current Text version
+        
         Returns:
              int: Current Text Version
         """
@@ -508,6 +512,8 @@ class TextManager(Manager):
     @property
     def text_session_id(self):
         """
+        Current Text session id
+        
         Returns:
             int: Text session id if existing, `None` otherwise
         """
@@ -517,6 +523,8 @@ class TextManager(Manager):
     @property
     def text_options(self):
         """
+        Current Text options
+        
         Returns:
             :class:`TextOption`: Text options if existing, `None` otherwise
         """
@@ -526,6 +534,8 @@ class TextManager(Manager):
     @property
     def text_input_scope(self):
         """
+        Current Text input scope
+        
         Returns:
             :class:`TextInputScope`: Text input scope if existing, `None` otherwise
         """
@@ -535,6 +545,8 @@ class TextManager(Manager):
     @property
     def max_text_length(self):
         """
+        Maximum Text length
+        
         Returns:
             int: Max text length if existing, `None` otherwise
         """
@@ -544,6 +556,8 @@ class TextManager(Manager):
     @property
     def text_locale(self):
         """
+        Test
+        
         Returns:
             str: Text locale if existing, `None` otherwise
         """
@@ -553,6 +567,8 @@ class TextManager(Manager):
     @property
     def text_prompt(self):
         """
+        Test
+        
         Returns:
             str: Text prompt if existing, `None` otherwise
         """

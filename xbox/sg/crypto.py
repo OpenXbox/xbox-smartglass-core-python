@@ -3,9 +3,10 @@ Cryptography portion used for sending Smartglass message
 
 Depending on the foreign public key type, the following Elliptic curves
 can be used:
- * Prime 256R1
- * Prime 384R1
- * Prime 521R1
+
+* Prime 256R1
+* Prime 384R1
+* Prime 521R1
 
 1. On Discovery, the console responds with a DiscoveryResponse
    including a certificate, this certificate holds the console's
@@ -16,9 +17,11 @@ can be used:
 4. The `salted shared secret` is hashed using `SHA-512`
 5. The `salted & hashed shared secret` is split into the following
    individual keys:
+    
     * bytes  0-16: Encryption key (AES 128-CBC)
     * bytes 16-32: Initialization Vector key
     * bytes 32-64: Hashing key (HMAC SHA-256)
+
 6. The resulting `public key` from this :class:`Crypto` context is
    sent with the ConnectRequest message to the console
 """
