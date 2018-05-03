@@ -61,7 +61,7 @@ setup(
             'xbox-poweron=xbox.sg.scripts.poweron:main',
             'xbox-poweroff=xbox.sg.scripts.poweroff:main',
             'xbox-client=xbox.sg.scripts.client:main',
-            'xbox-recrypt=xbox.sg.scripts.recrypt_packets:main',
+            'xbox-recrypt=xbox.sg.scripts.recrypt:main',
             'xbox-text=xbox.sg.scripts.text:main',
             'xbox-input=xbox.sg.scripts.input:main',
             'xbox-tui=xbox.sg.scripts.tui:main',
