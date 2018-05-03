@@ -17,3 +17,68 @@ This library provides the core foundation for the smartglass protocol that is us
 with the Xbox One Gaming console
 
 For in-depth information, check out the documentation: (https://openxbox.github.io)
+
+Dependencies
+------------
+* Python >= 3.5
+* construct (https://construct.readthedocs.io/)
+* cryptography (https://cryptography.io/en/stable/)
+* gevent (http://www.gevent.org/)
+* dpkt (https://dpkt.readthedocs.io/en/latest/)
+
+How to use
+----------
+
+Install::
+
+  pip install xbox-smartglass-core
+
+Usage::
+
+  # client and poweroff scripts need xbox live tokens to function
+  # -> authenticate first
+  xbox-authenticate
+  # alternatively: ncurses terminal ui
+  xbox-auth-tui
+
+  # Console Discovery
+  xbox-discover
+
+  # Console Poweron (console Live-ID: FD0001232435)
+  xbox-poweron FD0001232435
+
+  # Basic Client
+  xbox-client
+
+  # Gamepad input (via keyboard)
+  xbox-input
+
+  # Text Input
+  xbox-text
+
+  # Console Poweroff
+  xbox-poweroff --liveid FD0001232435
+  or
+  xbox-poweroff --address 192.168.0.220
+  or
+  xbox-poweroff --all
+
+  # PCAP Analyzer - Needs shared secret hexstring to decrypt
+  xbox-pcap filename.pcap 0001020304AABBCC..BE
+
+Known issues
+------------
+* Find, report and/or fix them ;)
+
+Contribute
+----------
+* Report bugs/suggest features
+* Add/update docs
+* Enhance managers
+
+Credits
+-------
+This package uses parts of Cookiecutter_ and the `audreyr/cookiecutter-pypackage`_ project template.
+
+.. _Cookiecutter: https://github.com/audreyr/cookiecutter
+.. _`audreyr/cookiecutter-pypackage`: https://github.com/audreyr/cookiecutter-pypackage
