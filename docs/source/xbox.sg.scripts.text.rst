@@ -1,7 +1,7 @@
-Smartglass packet Recryptor
+xbox.sg.scripts.text module
 ===========================
 
-.. automodule:: xbox.sg.scripts.recrypt_packets
+.. automodule:: xbox.sg.scripts.text
     :members:
     :undoc-members:
     :show-inheritance:
