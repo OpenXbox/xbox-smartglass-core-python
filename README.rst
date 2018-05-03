@@ -26,45 +26,27 @@ Dependencies
 * gevent (http://www.gevent.org/)
 * dpkt (https://dpkt.readthedocs.io/en/latest/)
 
+Install
+-------
+
+Via pip:
+::
+
+    pip install xbox-smartglass-core
+
+
 How to use
 ----------
 
-Install::
+Authenticate first (Authentication provided by xbox-webapi-python):
+::
 
-  pip install xbox-smartglass-core
+    xbox-authenticate
 
-Usage::
+    # alternatively: ncurses terminal ui
+    xbox-auth-tui
 
-  # client and poweroff scripts need xbox live tokens to function
-  # -> authenticate first
-  xbox-authenticate
-  # alternatively: ncurses terminal ui
-  xbox-auth-tui
-
-  # Console Discovery
-  xbox-discover
-
-  # Console Poweron (console Live-ID: FD0001232435)
-  xbox-poweron FD0001232435
-
-  # Basic Client
-  xbox-client
-
-  # Gamepad input (via keyboard)
-  xbox-input
-
-  # Text Input
-  xbox-text
-
-  # Console Poweroff
-  xbox-poweroff --liveid FD0001232435
-  or
-  xbox-poweroff --address 192.168.0.220
-  or
-  xbox-poweroff --all
-
-  # PCAP Analyzer - Needs shared secret hexstring to decrypt
-  xbox-pcap filename.pcap 0001020304AABBCC..BE
+Now have a look in the Documentation_ how to use the provided shell-scripts!
 
 Known issues
 ------------
@@ -80,5 +62,6 @@ Credits
 -------
 This package uses parts of Cookiecutter_ and the `audreyr/cookiecutter-pypackage`_ project template.
 
+.. _Documentation: https://xbox-smartglass-core-python.readthedocs.io/en/latest/source/xbox.sg.scripts.html
 .. _Cookiecutter: https://github.com/audreyr/cookiecutter
 .. _`audreyr/cookiecutter-pypackage`: https://github.com/audreyr/cookiecutter-pypackage
