@@ -10,8 +10,8 @@ Xbox-Smartglass-Core
     :target: http://xbox-smartglass-core-python.readthedocs.io/en/latest/?badge=latest
     :alt: Documentation Status
 
-.. image:: https://travis-ci.org/OpenXbox/xbox-smartglass-core-python.svg?branch=master
-    :target: https://travis-ci.org/OpenXbox/xbox-smartglass-core-python
+.. image:: https://travis-ci.com/OpenXbox/xbox-smartglass-core-python.svg?branch=master
+    :target: https://travis-ci.com/OpenXbox/xbox-smartglass-core-python
 
 This library provides the core foundation for the smartglass protocol that is used
 with the Xbox One Gaming console
