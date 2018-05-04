@@ -17,6 +17,8 @@ from xbox.sg import packer
 from xbox.sg.crypto import Crypto
 from xbox.sg.enum import PacketType
 
+from construct.lib import containers
+containers.setGlobalPrintFullStrings(True)
 
 def packet_filter(filepath):
     with open(filepath, 'rb') as fh:
