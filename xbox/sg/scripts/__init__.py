@@ -7,4 +7,4 @@ TOKENS_FILE = os.path.join(DATA_DIR, 'tokens.json')
 CONSOLES_FILE = os.path.join(DATA_DIR, 'consoles.json')
 
 if not os.path.exists(DATA_DIR):
-    os.mkdir(DATA_DIR)
+    os.makedirs(DATA_DIR)
