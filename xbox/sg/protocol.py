@@ -461,19 +461,21 @@ class CoreProtocol(DatagramServer):
         msg = factory.local_join(client_info)
         return self.send_message(msg, **kwargs)
 
-    def start_channel(self, channel, messagetarget_uuid, **kwargs):
+    def start_channel(self, channel, messagetarget_uuid, title_id=0, activity_id=0, **kwargs):
         """
         Request opening of specific ServiceChannel
 
         Args:
             channel (:class:`ServiceChannel`): Channel to start
             messagetarget_uuid (UUID): Message Target UUID
+            title_id (int): Title ID, Only used for ServiceChannel.Title
+            activity_id (int): Activity ID, unknown use-case
             **kwargs: KwArgs
 
         Returns: None
         """
         request_id = self._chl_mgr.get_next_request_id(channel)
-        msg = factory.start_channel(request_id, 0, messagetarget_uuid, 0)
+        msg = factory.start_channel(request_id, title_id, messagetarget_uuid, activity_id)
         return self.send_message(msg, **kwargs)
 
     def ack(self, processed, rejected, channel, need_ack=False):
