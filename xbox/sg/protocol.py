@@ -431,7 +431,7 @@ class CoreProtocol(DatagramServer):
             raise ProtocolError("Exceeded connect retries")
 
         connect_result = result.protected_payload.connect_result
-        if connect_result not in [ConnectionResult.Success, ConnectionResult.Pending]:
+        if connect_result != ConnectionResult.Success:
             raise ProtocolError(
                 "Connecting failed! Result: %s" % ConnectionResult[connect_result]
             )
