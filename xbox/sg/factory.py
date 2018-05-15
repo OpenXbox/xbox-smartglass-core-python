@@ -514,3 +514,21 @@ def systemtext_done(session_id, text_version, flags, result, **kwargs):
             result=result
         )
     )
+
+
+def title_auxiliary_stream(**kwargs):
+    """
+    Assemble Auxiliary Stream message
+
+    Returns:
+         :class:`XStructObj`: Instance of :class:`XStructObj`
+    """
+    return message.struct(
+        header=_message_header(
+            MessageType.AuxilaryStream,
+            need_ack=True, **kwargs
+        ),
+        protected_payload=message.auxiliary_stream(
+            connection_info_flag=0
+        )
+    )
