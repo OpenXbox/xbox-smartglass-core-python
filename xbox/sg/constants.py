@@ -33,7 +33,7 @@ class WindowsClientInfo(object):
     DpiX = 96
     DpiY = 96
     DeviceCapabilities = DeviceCapabilities.All
-    ClientVersion = 15
+    ClientVersion = 39
     OSMajor = 6
     OSMinor = 2
     DisplayName = "SmartGlass-PC"
