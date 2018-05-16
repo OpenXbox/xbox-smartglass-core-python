@@ -30,7 +30,7 @@ setup(
         "Programming Language :: Python :: 3.6"
     ],
     install_requires=[
-        'xbox-webapi',
+        'xbox-webapi>=1.1.2',
         'construct==2.9.45',
         'cryptography',
         'appdirs',
