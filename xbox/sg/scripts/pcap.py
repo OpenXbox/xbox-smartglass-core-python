@@ -9,13 +9,13 @@ import shutil
 import string
 import textwrap
 import argparse
-from binascii import unhexlify
+from binascii import unhexlify, hexlify
 
 import dpkt
 
 from xbox.sg import packer
 from xbox.sg.crypto import Crypto
-from xbox.sg.enum import PacketType
+from xbox.sg.enum import PacketType, MessageType
 
 from construct.lib import containers
 containers.setGlobalPrintFullStrings(True)
@@ -59,6 +59,20 @@ def parse(pcap_filepath, crypto):
 
         if msg_type == PacketType.Message:
             type_str = msg.header.flags.msg_type.name
+
+
+        if msg_type != PacketType.Message or msg.header.flags.msg_type != MessageType.AuxilaryStream:
+            continue
+
+        def un(d):
+            return hexlify(d).decode('utf-8')
+
+        if msg.protected_payload.connection_info_flag == 1:
+            info = msg.protected_payload.connection_info
+            print('Crypto Key: %s' % un(info.crypto_key))
+            print('Client IV: %s' % un(info.client_iv))
+            print('Server IV: %s' % un(info.server_iv))
+            print('Sign Hash: %s' % un(info.sign_hash))
 
         direction = '>' if is_client else '<'
         print(' {} '.format(type_str).center(width, direction))
