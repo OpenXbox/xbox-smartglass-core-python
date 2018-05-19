@@ -379,7 +379,7 @@ def test_unsnap(packets, crypto):
 def test_gamedvr_record(packets, crypto):
     bin_name = 'gamedvr_record'
     msg = factory.game_dvr_record(
-        start_time_delta=4294967236,
+        start_time_delta=-60,
         end_time_delta=0
     )
     msg.header(
@@ -392,7 +392,7 @@ def test_gamedvr_record(packets, crypto):
     assert msg.header.pkt_type == enum.PacketType.Message
     assert msg.header.flags.msg_type == enum.MessageType.GameDvrRecord
 
-    assert msg.protected_payload.start_time_delta == 4294967236
+    assert msg.protected_payload.start_time_delta == -60
     assert msg.protected_payload.end_time_delta == 0
 
     assert len(packed) == len(packets[bin_name])

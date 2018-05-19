@@ -79,8 +79,8 @@ power_off = XStruct(
 
 
 game_dvr_record = XStruct(
-    'start_time_delta' / Int32ub,
-    'end_time_delta' / Int32ub
+    'start_time_delta' / Int32sb,
+    'end_time_delta' / Int32sb
 )
 
 

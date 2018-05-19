@@ -120,7 +120,7 @@ def test_gamedvr_record(packets, crypto):
     payload = unpacked.protected_payload
 
     assert unpacked.header.flags.msg_type == enum.MessageType.GameDvrRecord
-    assert payload.start_time_delta == 4294967236
+    assert payload.start_time_delta == -60
     assert payload.end_time_delta == 0
 
 
