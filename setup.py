@@ -31,12 +31,12 @@ setup(
     ],
     install_requires=[
         'xbox-webapi>=1.1.2',
-        'construct==2.9.45',
-        'cryptography',
-        'appdirs',
-        'gevent',
-        'urwid',
-        'dpkt'
+        'construct==2.9.41',
+        'cryptography==2.2.2',
+        'appdirs==1.4.3',
+        'gevent==1.2.2',
+        'urwid==2.0.1',
+        'dpkt==1.9.1'
     ],
     tests_require=[
         'pytest',
