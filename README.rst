@@ -13,6 +13,10 @@ Xbox-Smartglass-Core
 .. image:: https://travis-ci.com/OpenXbox/xbox-smartglass-core-python.svg?branch=master
     :target: https://travis-ci.com/OpenXbox/xbox-smartglass-core-python
 
+.. image:: https://img.shields.io/badge/discord-OpenXbox-blue.svg
+    :target: https://discord.gg/uzbC73m
+    :alt: Discord chat channel
+
 This library provides the core foundation for the smartglass protocol that is used
 with the Xbox One Gaming console
 
