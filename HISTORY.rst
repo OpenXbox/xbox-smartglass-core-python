@@ -2,6 +2,10 @@
 History
 =======
 
+1.0.8 (2018-06-14)
+------------------
+* Use aenum library for backwards-compat with _enum.Flag_ on py3.5
+
 1.0.7 (2018-05-16)
 ------------------
 * CoreProtocol.connect: Treat ConnectionResult.Pending as error
