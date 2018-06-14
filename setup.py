@@ -36,7 +36,8 @@ setup(
         'appdirs==1.4.3',
         'gevent==1.2.2',
         'urwid==2.0.1',
-        'dpkt==1.9.1'
+        'dpkt==1.9.1',
+        'aenum==2.1.2;python_version<="3.5"'
     ],
     tests_require=[
         'pytest',
