@@ -24,7 +24,7 @@ For in-depth information, check out the documentation: (https://openxbox.github.
 
 Dependencies
 ------------
-* Python >= 3.6
+* Python >= 3.5
 * construct (https://construct.readthedocs.io/)
 * cryptography (https://cryptography.io/en/stable/)
 * gevent (http://www.gevent.org/)
