@@ -244,8 +244,8 @@ class Console(object):
         cls.__protocol__.power_on(liveid, addr, tries)
 
     def _power_on(self, tries=2):
-        self.protocol.power_on(self.liveid, self.address, tries)
-
+        Console.power_on(self.liveid, self.address, tries)
+        
     def connect(self, userhash='', xsts_token=''):
         """
         Connect to the console
@@ -317,11 +317,12 @@ class Console(object):
         """
         Power off the console.
 
-        No need to disconnect previously.
+        No need to disconnect after.
 
         Returns: None
         """
         self.protocol.power_off(self.liveid)
+        self._reset_state()
 
     def _on_message(self, msg, channel):
         """
@@ -353,12 +354,20 @@ class Console(object):
 
         Returns: None
         """
+        self._reset_state()
+        self.on_timeout()
+
+    def _reset_state(self):
+        """
+        Internal handler to reset the inital state of the console instance.
+
+        Returns: None
+        """
         self.connection_state = ConnectionState.Disconnected
         self.pairing_state = PairedIdentityState.NotPaired
         self.device_status = DeviceStatus.Unavailable
         self.active_surface = None
         self.console_status = None
-        self.on_timeout()
 
     @property
     def public_key(self):

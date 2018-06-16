@@ -264,7 +264,7 @@ class ConsoleButton(urwid.Button):
 
     def keypress(self, size, key):
         if key in ('p', 'P'):
-            Console.power_on(self.console.liveid)
+            self.console.power_on()
         elif key in ('c', 'C'):
             self.connect()
         elif key in ('d', 'D'):
