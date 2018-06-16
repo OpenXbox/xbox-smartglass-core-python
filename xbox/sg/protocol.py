@@ -433,7 +433,7 @@ class CoreProtocol(DatagramServer):
         connect_result = result.protected_payload.connect_result
         if connect_result != ConnectionResult.Success:
             raise ProtocolError(
-                "Connecting failed! Result: %s" % ConnectionResult[connect_result]
+                "Connecting failed! Result: %s" % connect_result
             )
 
         self.target_participant_id = 0
