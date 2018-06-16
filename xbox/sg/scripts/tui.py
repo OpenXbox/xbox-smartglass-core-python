@@ -487,10 +487,12 @@ class SGDisplay(object):
 
     footer_console_text = ('foot', [
         ('key', 'C:'), "commands ",
+        ('key', 'L:'), "view log ",
         ('key', 'Q:'), "quit "
     ])
 
     footer_log_text = ('foot', [
+        ('key', 'ENTER:'), "show details ",
         ('key', 'Q:'), "quit "
     ])
 
