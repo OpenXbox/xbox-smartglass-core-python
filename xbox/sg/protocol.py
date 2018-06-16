@@ -93,7 +93,10 @@ class CoreProtocol(DatagramServer):
         Returns: None
         """
         if self.started:
-            self.disconnect()
+            try:
+                self.disconnect()  # Best effort disconnect
+            except Exception:
+                pass
             super(DatagramServer, self).stop(*args, **kwargs)
 
     def send_message(self, msg, channel=ServiceChannel.Core, addr=None,
@@ -260,13 +263,13 @@ class CoreProtocol(DatagramServer):
             None
         """
         while self.started:
-            gevent.sleep(self.HEARTBEAT_INTERVAL)
             try:
                 self.ack([], [], ServiceChannel.Core, need_ack=True)
             except ProtocolError:
                 self.on_timeout()
                 self.stop()
                 break
+            gevent.sleep(self.HEARTBEAT_INTERVAL)
 
     def _on_message(self, msg, channel):
         """
@@ -444,7 +447,7 @@ class CoreProtocol(DatagramServer):
         for channel, target_uuid in CHANNEL_MAP.items():
             self.start_channel(channel, target_uuid)
 
-        gevent.spawn(self._heartbeat)
+        gevent.spawn_later(self.HEARTBEAT_INTERVAL, self._heartbeat)
         return result.protected_payload.pairing_state
 
     def local_join(self, client_info=WindowsClientInfo, **kwargs):
