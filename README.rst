@@ -45,12 +45,22 @@ How to use
 Authenticate first (Authentication provided by xbox-webapi-python):
 ::
 
-    xbox-authenticate
+    $ xbox-authenticate
 
-    # alternatively: ncurses terminal ui
-    xbox-auth-tui
+    # Alternative: Use the ncurses terminal ui, it has authentication integrated
+    $ xbox-tui
 
 Now have a look in the Documentation_ how to use the provided shell-scripts!
+
+Screenshots
+-----------
+Here you can see the SmartGlass TUI (Text user interface):
+
+.. image:: https://raw.githubusercontent.com/OpenXbox/xbox-smartglass-core-python/master/assets/xbox_tui_list.png
+
+.. image:: https://raw.githubusercontent.com/OpenXbox/xbox-smartglass-core-python/master/assets/xbox_tui_console.png
+
+.. image:: https://raw.githubusercontent.com/OpenXbox/xbox-smartglass-core-python/master/assets/xbox_tui_log.png
 
 Known issues
 ------------
