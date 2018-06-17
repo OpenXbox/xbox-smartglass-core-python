@@ -19,7 +19,7 @@ import gevent.signal
 from xbox.webapi.scripts.tui import WebAPIDisplay
 
 from xbox.sg.console import Console
-from xbox.sg.enum import DeviceStatus, ConnectionState, GamePadButton, MediaPlaybackStatus
+from xbox.sg.enum import DeviceStatus, GamePadButton, MediaPlaybackStatus
 from xbox.sg.manager import InputManager, TextManager, MediaManager
 from xbox.sg.scripts import TOKENS_FILE, CONSOLES_FILE
 
@@ -233,7 +233,7 @@ class ConsoleButton(urwid.Button):
         if self.console.connected:
             return True
 
-        if self.console.device_status != DeviceStatus.Available:
+        if not self.console.available:
             self.app.view_msgbox('Console unavailable, try refreshing')
             return False
 
@@ -242,7 +242,7 @@ class ConsoleButton(urwid.Button):
             xsts_token=self.app.auth_mgr.xsts_token.jwt
         )
 
-        if state != ConnectionState.Connected:
+        if not self.console.connected:
             self.app.view_msgbox('Connection failed! State: {}'.format(state))
             return False
 
@@ -291,47 +291,30 @@ class ConsoleList(urwid.Frame):
         self.walker[:] = [ConsoleButton(self.app, c) for c in self.consoles]
 
     def refresh(self):
-        Console.discover(blocking=False)
         gevent.spawn(self._refresh)
 
     def _refresh(self):
-        all_discovered = set()
-        with gevent.Timeout(5, False):
-            while True:
-                discovered = Console.discovered()
+        discovered = Console.discover(blocking=True)
 
-                if not discovered:
-                    gevent.sleep(0.5)
-                    continue
-
-                liveids = [d.liveid for d in discovered]
-                all_discovered.update(liveids)
-                for i, c in enumerate(self.consoles):
-                    if c.liveid in liveids:
-                        # Refresh existing entries
-                        idx = liveids.index(c.liveid)
-                        if c.device_status != discovered[idx].device_status:
-                            self.consoles[i] = discovered[idx]
-                            self.walker[i] = ConsoleButton(self.app, self.consoles[i])
-                        del discovered[idx]
-                        del liveids[idx]
-
-                # Extend with newly discovered items
-                self.consoles.extend(discovered)
-                self.walker.extend([ConsoleButton(self.app, c) for c in discovered])
-                # self.__refresh_ui()
-                gevent.sleep(0.5)
-
-        # Handle consoles that became unavailable
+        liveids = [d.liveid for d in discovered]
         for i, c in enumerate(self.consoles):
-            if c.liveid not in all_discovered:
-                c.device_status = DeviceStatus.Unavailable
-                self.walker[i] = ConsoleButton(self.app, c)
+            if c.liveid in liveids:
+                # Refresh existing entries
+                idx = liveids.index(c.liveid)
+                if c.device_status != discovered[idx].device_status:
+                    self.consoles[i] = discovered[idx]
+                del discovered[idx]
+                del liveids[idx]
+            elif c.liveid not in liveids:
+                # Set unresponsive consoles to Unavailable
+                self.consoles[i].device_status = DeviceStatus.Unavailable
 
-        # self.__refresh_ui()
+        # Add newly discovered consoles
+        self.consoles.extend(discovered)
 
-    # def __refresh_ui(self, *args):
-    #     self.walker[:] = [ConsoleButton(self.app, c) for c in self.consoles]
+        # Update the consolelist view
+        for i, c in enumerate(self.consoles):
+            self.walker[i] = ConsoleButton(self.app, self.consoles[i])
 
     def keypress(self, size, key):
         if key in ('r', 'R'):
