@@ -325,6 +325,7 @@ class Console(object):
         """
         self.protocol.power_off(self.liveid)
         self._reset_state()
+        self.device_status = DeviceStatus.Unavailable
 
     def _on_message(self, msg, channel):
         """
@@ -357,6 +358,7 @@ class Console(object):
         Returns: None
         """
         self._reset_state()
+        self.device_status = DeviceStatus.Unavailable
         self.on_timeout()
 
     def _reset_state(self):

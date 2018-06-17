@@ -216,6 +216,7 @@ class ConsoleButton(urwid.Button):
         self.console.add_manager(TextManager)
         self.console.on_connection_state += lambda _: self.refresh()
         self.console.on_console_status += lambda _: self.refresh()
+        self.console.on_device_status += lambda _: self.refresh()
 
         urwid.connect_signal(self, 'click', self.callback)
         self.textwidget = urwid.AttrWrap(urwid.SelectableIcon('', cursor_position=0), None)
@@ -322,9 +323,10 @@ class ConsoleList(urwid.Frame):
                 gevent.sleep(0.5)
 
         # Handle consoles that became unavailable
-        for c in self.consoles:
+        for i, c in enumerate(self.consoles):
             if c.liveid not in all_discovered:
                 c.device_status = DeviceStatus.Unavailable
+                self.walker[i] = ConsoleButton(self.app, c)
 
         # self.__refresh_ui()
 
