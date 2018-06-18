@@ -313,8 +313,7 @@ class ConsoleList(urwid.Frame):
         self.consoles.extend(discovered)
 
         # Update the consolelist view
-        for i, c in enumerate(self.consoles):
-            self.walker[i] = ConsoleButton(self.app, self.consoles[i])
+        self.walker[:] = [ConsoleButton(self.app, c) for c in self.consoles]
 
     def keypress(self, size, key):
         if key in ('r', 'R'):
