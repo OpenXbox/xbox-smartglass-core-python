@@ -89,11 +89,9 @@ class Console(object):
         self.managers = {}
         self._functions = {}
 
-        self.protocol = CoreProtocol(self.address, self._crypto)
-        # Proxy protocol event into console
-        self.protocol.on_timeout += self._on_timeout
-        self.protocol.on_message += self._on_message
         self.power_on = self._power_on  # Dirty hack
+
+        self._init_protocol()
 
     def __repr__(self):
         return '<Console addr={} name={} uuid={} liveid={} flags={}>'.format(
@@ -118,8 +116,14 @@ class Console(object):
         """
         gevent.sleep(seconds)
 
+    def _init_protocol(self):
+        self.protocol = CoreProtocol(self.address, self._crypto)
+        # Proxy protocol event into console
+        self.protocol.on_timeout += self._on_timeout
+        self.protocol.on_message += self._on_message
+
     @classmethod
-    def __start_protocol(cls):
+    def __start_cls_protocol(cls):
         """
         Start the protocol internally, if not running
 
@@ -207,7 +211,7 @@ class Console(object):
             list: List of discovered consoles.
 
         """
-        cls.__start_protocol()
+        cls.__start_cls_protocol()
         discovered = cls.__protocol__.discover(*args, **kwargs)
         return [cls.from_message(a, m) for a, m in discovered.items()]
 
@@ -240,11 +244,11 @@ class Console(object):
         Returns: None
 
         """
-        cls.__start_protocol()
+        cls.__start_cls_protocol()
         cls.__protocol__.power_on(liveid, addr, tries)
 
     def _power_on(self, tries=2):
-        self.protocol.power_on(self.liveid, self.address, tries)
+        Console.power_on(self.liveid, self.address, tries)
 
     def connect(self, userhash='', xsts_token=''):
         """
@@ -306,22 +310,22 @@ class Console(object):
 
         Returns: None
         """
-        self.connection_state = ConnectionState.Disconnecting
-        self.protocol.disconnect()
-        self.connection_state = ConnectionState.Disconnected
-        self.pairing_state = PairedIdentityState.NotPaired
-        self.active_surface = None
-        self.console_status = None
+        if self.connection_state == ConnectionState.Connected:
+            self.connection_state = ConnectionState.Disconnecting
+            self.protocol.stop()  # Stop also sends SG disconnect message
+            self._reset_state()
 
     def power_off(self):
         """
         Power off the console.
 
-        No need to disconnect previously.
+        No need to disconnect after.
 
         Returns: None
         """
         self.protocol.power_off(self.liveid)
+        self._reset_state()
+        self.device_status = DeviceStatus.Unavailable
 
     def _on_message(self, msg, channel):
         """
@@ -353,12 +357,24 @@ class Console(object):
 
         Returns: None
         """
+        self._reset_state()
+        self.device_status = DeviceStatus.Unavailable
+        self.on_timeout()
+
+    def _reset_state(self):
+        """
+        Internal handler to reset the inital state of the console instance.
+
+        Returns: None
+        """
+        if self.protocol and self.protocol.started:
+            self.protocol.stop()
+        self._init_protocol()
+
         self.connection_state = ConnectionState.Disconnected
         self.pairing_state = PairedIdentityState.NotPaired
-        self.device_status = DeviceStatus.Unavailable
         self.active_surface = None
         self.console_status = None
-        self.on_timeout()
 
     @property
     def public_key(self):

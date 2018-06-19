@@ -62,6 +62,8 @@ Here you can see the SmartGlass TUI (Text user interface):
 
 .. image:: https://raw.githubusercontent.com/OpenXbox/xbox-smartglass-core-python/master/assets/xbox_tui_log.png
 
+.. image:: https://raw.githubusercontent.com/OpenXbox/xbox-smartglass-core-python/master/assets/xbox_tui_logdetail.png
+
 Known issues
 ------------
 * Find, report and/or fix them ;)
