@@ -14,6 +14,7 @@ from gevent import socket
 from gevent.server import DatagramServer
 
 from xbox.sg import factory, packer
+from xbox.sg.packet.message import message_structs
 from xbox.sg.enum import PacketType, ConnectionResult, DisconnectReason,\
     ServiceChannel, MessageType, AckStatus, SGResultCode, ActiveTitleLocation
 from xbox.sg.constants import WindowsClientInfo, MessageTarget
@@ -204,10 +205,14 @@ class CoreProtocol(DatagramServer):
 
             elif msg.header.pkt_type == PacketType.Message:
                 channel = self._chl_mgr.get_channel(msg.header.channel_id)
+                message_info = msg.header.flags.msg_type.name
+
+                if msg.header.flags.is_fragment:
+                    message_info = 'MessageFragment ({0})'.format(message_info)
+
                 log.debug(
                     "Received %s message on ServiceChannel %s from %s",
-                    msg.header.flags.msg_type.name, channel.name, host,
-                    extra={'_msg': msg}
+                    message_info, channel.name, host, extra={'_msg': msg}
                 )
                 seq_num = msg.header.sequence_number
                 self._seq_mgr.add_received(seq_num)
@@ -217,8 +222,21 @@ class CoreProtocol(DatagramServer):
                         [msg.header.sequence_number], [], ServiceChannel.Core
                     )
 
-                self._on_message(msg, channel)
                 self._seq_mgr.low_watermark = seq_num
+
+                if msg.header.flags.is_fragment:
+                    sequence_begin = msg.protected_payload.sequence_begin
+                    sequence_end = msg.protected_payload.sequence_end
+                    fragment_payload = self._frg_mgr.reassemble_message(msg)
+                    if not fragment_payload:
+                        return
+
+                    msg(protected_payload=fragment_payload)
+                    log.debug("Assembled {0} (Seq {1}:{2})".format(
+                        message_info, sequence_begin, sequence_end
+                    ), extra={'_msg': msg})
+
+                self._on_message(msg, channel)
             else:
                 self._on_unk(msg)
         except Exception as e:
@@ -330,7 +348,7 @@ class CoreProtocol(DatagramServer):
         text = msg.protected_payload.text
 
         if 'fragment_data' in text:
-            text = self._frg_mgr.reassemble(text)
+            text = self._frg_mgr.reassemble_json(text)
             if not text:
                 # Input message is a fragment, but cannot assemble full msg yet
                 return
@@ -811,9 +829,49 @@ class FragmentManager(object):
     Assembles fragmented messages
     """
     def __init__(self):
-        self.queue = {}
+        self.msg_queue = {}
+        self.json_queue = {}
 
-    def reassemble(self, json_msg):
+    def reassemble_message(self, msg):
+        """
+        Reassemble message fragment
+
+        Args:
+            msg (:class:`.XStruct`): Message fragment
+
+        Returns:
+            :class:`.XStruct`: Reassembled / decoded payload on success,
+                `None` if payload is not ready or assembly failed
+        """
+        msg_type = msg.header.flags.msg_type
+        payload = msg.protected_payload
+        current_sequence = msg.header.sequence_number
+        sequence_begin = payload.sequence_begin
+        sequence_end = payload.sequence_end
+
+        self.msg_queue[current_sequence] = payload.data
+
+        wanted_sequences = list(range(sequence_begin, sequence_end))
+        assembled = b''
+        for s in wanted_sequences:
+            data = self.msg_queue.get(s)
+            if not data:
+                return
+
+            assembled += data
+
+        [self.msg_queue.pop(s) for s in wanted_sequences]
+
+        # Parse raw data with original message struct
+        struct = message_structs.get(msg_type)
+        if not struct:
+            raise FragmentError(
+                'Failed to find message struct for fragmented {0}'.format(msg_type)
+            )
+
+        return struct.parse(assembled)
+
+    def reassemble_json(self, json_msg):
         """
         Reassemble fragmented json message
 
@@ -827,11 +885,11 @@ class FragmentManager(object):
         datagram_id, datagram_size = int(json_msg['datagram_id']), int(json_msg['datagram_size'])
         fragment_offset = int(json_msg['fragment_offset'])
 
-        fragments = self.queue.get(datagram_id)
+        fragments = self.json_queue.get(datagram_id)
 
         if not fragments:
             # Just add initial fragment
-            self.queue[datagram_id] = [json_msg]
+            self.json_queue[datagram_id] = [json_msg]
             return None
 
         # It's a follow-up fragment
@@ -852,7 +910,7 @@ class FragmentManager(object):
 
             output = ''.join(f['fragment_data'] for f in sorted_fragments)
 
-            self.queue.pop(datagram_id)
+            self.json_queue.pop(datagram_id)
             return self._decode(output)
 
         return None

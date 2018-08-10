@@ -121,7 +121,7 @@ def test_channel_manager(packets, crypto):
     assert mgr.get_channel_id(ServiceChannel.Ack) == 0x1000000000000000
 
 
-def test_fragment_manager(json_fragments):
+def test_fragment_manager_json(json_fragments):
     expected_result = {'response': 'GetConfiguration',
                        'msgid': 'xV5X1YCB.13',
                        'params': [
@@ -241,26 +241,46 @@ def test_fragment_manager(json_fragments):
     mgr = FragmentManager()
 
     for msg in json_fragments:
-        msg1 = mgr.reassemble(msg)
+        msg1 = mgr.reassemble_json(msg)
 
     for msg in reversed(json_fragments):
-        msg2 = mgr.reassemble(msg)
+        msg2 = mgr.reassemble_json(msg)
 
     # Deliver a fragment twice
-    mgr.reassemble(json_fragments[0])
-    mgr.reassemble(json_fragments[1])
-    mgr.reassemble(json_fragments[2])
-    mgr.reassemble(json_fragments[2])
-    msg3 = mgr.reassemble(json_fragments[3])
+    mgr.reassemble_json(json_fragments[0])
+    mgr.reassemble_json(json_fragments[1])
+    mgr.reassemble_json(json_fragments[2])
+    mgr.reassemble_json(json_fragments[2])
+    msg3 = mgr.reassemble_json(json_fragments[3])
 
     # Incomplete fragments
     for msg in reversed(json_fragments[:-1]):
-        msg4 = mgr.reassemble(msg)
+        msg4 = mgr.reassemble_json(msg)
 
     with pytest.raises(KeyError):
-        mgr.reassemble({'not': 'all', 'required': 'fields'})
+        mgr.reassemble_json({'not': 'all', 'required': 'fields'})
 
     assert msg1 == expected_result
     assert msg2 == expected_result
     assert msg3 == expected_result
     assert msg4 is None
+
+
+def test_fragment_manager_fragment_messages(packets, crypto):
+    from xbox.sg.packer import unpack
+
+    fragments = [
+        unpack(packets['fragment_media_state_0'], crypto),
+        unpack(packets['fragment_media_state_1'], crypto),
+        unpack(packets['fragment_media_state_2'], crypto)
+    ]
+
+    mgr = FragmentManager()
+    assert mgr.reassemble_message(fragments.pop()) is None
+    assert mgr.reassemble_message(fragments.pop()) is None
+    msg = mgr.reassemble_message(fragments.pop())
+    assert msg is not None
+
+    assert msg.aum_id == 'Microsoft.BlurayPlayer_8wekyb3d8bbwe!Xbox.BlurayPlayer.Application'
+    assert msg.max_seek == 50460000
+    assert len(msg.asset_id) == 2184
