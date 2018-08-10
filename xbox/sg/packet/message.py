@@ -28,7 +28,7 @@ header = XStruct(
 fragment = XStruct(
     'sequence_begin' / Int32ub,
     'sequence_end' / Int32ub,
-    'data' / SGString()
+    'data' / PrefixedBytes(Int16ub)
 )
 
 
@@ -325,54 +325,58 @@ active_surface_change = XStruct(
     'master_session_key' / Bytes(0x20)
 )
 
+message_structs = {
+    MessageType.Ack: acknowledge,
+    MessageType.Group: Pass,
+    MessageType.LocalJoin: local_join,
+    MessageType.StopActivity: Pass,
+    MessageType.AuxilaryStream: auxiliary_stream,
+    MessageType.ActiveSurfaceChange: active_surface_change,
+    MessageType.Navigate: Pass,
+    MessageType.Json: json,
+    MessageType.Tunnel: Pass,
+    MessageType.ConsoleStatus: console_status,
+    MessageType.TitleTextConfiguration: text_configuration,
+    MessageType.TitleTextInput: title_text_input,
+    MessageType.TitleTextSelection: title_text_selection,
+    MessageType.MirroringRequest: Pass,
+    MessageType.TitleLaunch: title_launch,
+    MessageType.StartChannelRequest: start_channel_request,
+    MessageType.StartChannelResponse: start_channel_response,
+    MessageType.StopChannel: stop_channel,
+    MessageType.System: Pass,
+    MessageType.Disconnect: disconnect,
+    MessageType.TitleTouch: touch,
+    MessageType.Accelerometer: accelerometer,
+    MessageType.Gyrometer: gyrometer,
+    MessageType.Inclinometer: inclinometer,
+    MessageType.Compass: compass,
+    MessageType.Orientation: orientation,
+    MessageType.PairedIdentityStateChanged: paired_identity_state_changed,
+    MessageType.Unsnap: unsnap,
+    MessageType.GameDvrRecord: game_dvr_record,
+    MessageType.PowerOff: power_off,
+    MessageType.MediaControllerRemoved: media_controller_removed,
+    MessageType.MediaCommand: media_command,
+    MessageType.MediaCommandResult: media_command_result,
+    MessageType.MediaState: media_state,
+    MessageType.Gamepad: gamepad,
+    MessageType.SystemTextConfiguration: text_configuration,
+    MessageType.SystemTextInput: system_text_input,
+    MessageType.SystemTouch: touch,
+    MessageType.SystemTextAck: system_text_acknowledge,
+    MessageType.SystemTextDone: system_text_done
+}
 
 struct = XStruct(
     'header' / header,
     'protected_payload' / CryptoTunnel(
-        XSwitch(
-            this.header.flags.msg_type, {
-                MessageType.Ack: acknowledge,
-                MessageType.Group: Pass,
-                MessageType.LocalJoin: local_join,
-                MessageType.StopActivity: Pass,
-                MessageType.AuxilaryStream: auxiliary_stream,
-                MessageType.ActiveSurfaceChange: active_surface_change,
-                MessageType.Navigate: Pass,
-                MessageType.Json: json,
-                MessageType.Tunnel: Pass,
-                MessageType.ConsoleStatus: console_status,
-                MessageType.TitleTextConfiguration: text_configuration,
-                MessageType.TitleTextInput: title_text_input,
-                MessageType.TitleTextSelection: title_text_selection,
-                MessageType.MirroringRequest: Pass,
-                MessageType.TitleLaunch: title_launch,
-                MessageType.StartChannelRequest: start_channel_request,
-                MessageType.StartChannelResponse: start_channel_response,
-                MessageType.StopChannel: stop_channel,
-                MessageType.System: Pass,
-                MessageType.Disconnect: disconnect,
-                MessageType.TitleTouch: touch,
-                MessageType.Accelerometer: accelerometer,
-                MessageType.Gyrometer: gyrometer,
-                MessageType.Inclinometer: inclinometer,
-                MessageType.Compass: compass,
-                MessageType.Orientation: orientation,
-                MessageType.PairedIdentityStateChanged: paired_identity_state_changed,
-                MessageType.Unsnap: unsnap,
-                MessageType.GameDvrRecord: game_dvr_record,
-                MessageType.PowerOff: power_off,
-                MessageType.MediaControllerRemoved: media_controller_removed,
-                MessageType.MediaCommand: media_command,
-                MessageType.MediaCommandResult: media_command_result,
-                MessageType.MediaState: media_state,
-                MessageType.Gamepad: gamepad,
-                MessageType.SystemTextConfiguration: text_configuration,
-                MessageType.SystemTextInput: system_text_input,
-                MessageType.SystemTouch: touch,
-                MessageType.SystemTextAck: system_text_acknowledge,
-                MessageType.SystemTextDone: system_text_done
-            },
-            Pass
+        IfThenElse(this.header.flags.is_fragment, fragment,
+            XSwitch(
+                this.header.flags.msg_type,
+                message_structs,
+                Pass
+            )
         )
     )
 )

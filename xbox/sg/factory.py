@@ -115,11 +115,10 @@ def message_fragment(msg_type, sequence_begin, sequence_end, data, **kwargs):
     Assemble fragmented message.
 
     Args:
-        channel_id (int): Target Channel Id to send the message to.
         msg_type (int): Base Message Type.
-        sequence_begin (int): Start position of data chunk.
-        sequence_end (int): End position of data chunk.
-        data (str): Base64-encoded data chunk.
+        sequence_begin (int): Sequence number with first fragment.
+        sequence_end (int): Last sequence number (+1) containing fragment.
+        data (bytes): Plaintext MessagePacket payload fragment.
 
     Returns:
         :class:`XStructObj`: Instance of :class:`:class:`XStructObj``.
