@@ -2,6 +2,13 @@
 History
 =======
 
+1.0.9 (2018-08-11)
+------------------
+* Fix for Console instance poweron
+* Reset state after poweroff
+* Little fixes to TUI
+* Support handling MessageFragments
+
 1.0.8 (2018-06-14)
 ------------------
 * Use aenum library for backwards-compat with _enum.Flag_ on py3.5
