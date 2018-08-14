@@ -2,6 +2,11 @@
 History
 =======
 
+1.0.10 (2018-08-14)
+-------------------
+
+* Safeguard around connect() functions, if userhash and xsts_token is NoneType
+
 1.0.9 (2018-08-11)
 ------------------
 * Fix for Console instance poweron
