@@ -250,7 +250,7 @@ class Console(object):
     def _power_on(self, tries=2):
         Console.power_on(self.liveid, self.address, tries)
 
-    def connect(self, userhash='', xsts_token=''):
+    def connect(self, userhash=None, xsts_token=None):
         """
         Connect to the console
 
@@ -267,8 +267,8 @@ class Console(object):
         if self.connected:
             raise ConnectionError("Already connected")
 
-        if not self.anonymous_connection_allowed and \
-           not userhash and not xsts_token:
+        auth_data_available = bool(userhash and xsts_token)
+        if not self.anonymous_connection_allowed and not auth_data_available:
             raise ConnectionError("Anonymous connection not allowed, please"
                                   " supply userhash and auth-token")
 

@@ -422,6 +422,11 @@ class CoreProtocol(DatagramServer):
         if not self.crypto:
             raise ProtocolError("No crypto")
 
+        if isinstance(userhash, type(None)):
+            userhash = ''
+        if isinstance(xsts_token, type(None)):
+            xsts_token = ''
+
         iv = self.crypto.generate_iv()
         pubkey_type = self.crypto.pubkey_type
         pubkey = self.crypto.pubkey_bytes
