@@ -301,6 +301,19 @@ class Console(object):
         """
         return self.protocol.launch_title(uri, location)
 
+    def game_dvr_record(self, start_delta, end_delta):
+        """
+        Start Game DVR recording
+
+        Args:
+            start_delta (int): Start time
+            end_delta (int): End time
+
+        Returns:
+            int: Member of :class:`AckStatus`
+        """
+        return self.protocol.game_dvr_record(start_delta, end_delta)
+
     def disconnect(self):
         """
         Disconnect from console.
