@@ -32,7 +32,7 @@ setup(
     install_requires=[
         'xbox-webapi>=1.1.2',
         'construct==2.9.41',
-        'cryptography==2.2.2',
+        'cryptography==2.3.1',
         'appdirs==1.4.3',
         'gevent==1.2.2',
         'urwid==2.0.1',
