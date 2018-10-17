@@ -60,20 +60,6 @@ def parse(pcap_filepath, crypto):
         if msg_type == PacketType.Message:
             type_str = msg.header.flags.msg_type.name
 
-
-        if msg_type != PacketType.Message or msg.header.flags.msg_type != MessageType.AuxilaryStream:
-            continue
-
-        def un(d):
-            return hexlify(d).decode('utf-8')
-
-        if msg.protected_payload.connection_info_flag == 1:
-            info = msg.protected_payload.connection_info
-            print('Crypto Key: %s' % un(info.crypto_key))
-            print('Client IV: %s' % un(info.client_iv))
-            print('Server IV: %s' % un(info.server_iv))
-            print('Sign Hash: %s' % un(info.sign_hash))
-
         direction = '>' if is_client else '<'
         print(' {} '.format(type_str).center(width, direction))
 
