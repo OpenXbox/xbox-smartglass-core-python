@@ -6,7 +6,7 @@ from xbox.sg import packer
 def test_init(public_key, uuid_dummy):
     c = console.Console(
         '10.0.0.23', 'XboxOne', uuid_dummy, 'FFFFFFFFFFF',
-        enum.PrimaryDeviceFlag.AllowConsoleUsers, public_key
+        enum.PrimaryDeviceFlag.AllowConsoleUsers, 0, public_key
     )
 
     assert c.address == '10.0.0.23'

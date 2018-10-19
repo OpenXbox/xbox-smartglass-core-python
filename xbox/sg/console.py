@@ -48,7 +48,7 @@ from xbox.sg.utils.events import Event
 class Console(object):
     __protocol__ = CoreProtocol()
 
-    def __init__(self, address, name, uuid, liveid, flags=PrimaryDeviceFlag.Null, public_key=None):
+    def __init__(self, address, name, uuid, liveid, flags=PrimaryDeviceFlag.Null, last_error=0, public_key=None):
         """
         Initialize an instance of Console
 
@@ -66,6 +66,7 @@ class Console(object):
         self.uuid = uuid
         self.liveid = liveid
         self.flags = flags
+        self.last_error = last_error
         self._public_key = None
         self._crypto = None
 
@@ -94,8 +95,8 @@ class Console(object):
         self._init_protocol()
 
     def __repr__(self):
-        return '<Console addr={} name={} uuid={} liveid={} flags={}>'.format(
-            self.address, self.name, self.uuid, self.liveid, self.flags
+        return '<Console addr={} name={} uuid={} liveid={} flags={} last_error={}>'.format(
+            self.address, self.name, self.uuid, self.liveid, self.flags, self.last_error
         )
 
     def __enter__(self):
@@ -147,7 +148,7 @@ class Console(object):
         payload = msg.unprotected_payload
         console = cls(
             address, payload.name, payload.uuid, payload.cert.liveid,
-            payload.flags, payload.cert.pubkey
+            payload.flags, payload.last_error, payload.cert.pubkey
         )
         console.device_status = DeviceStatus.Available
         return console
