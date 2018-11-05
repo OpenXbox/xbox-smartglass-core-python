@@ -2,6 +2,13 @@
 History
 =======
 
+1.0.11 (2018-11-05)
+-------------------
+
+* Add game_dvr_record to Console-class
+* Fix PCAP parser
+* Add last_error property to Console-class
+
 1.0.10 (2018-08-14)
 -------------------
 
