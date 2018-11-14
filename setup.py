@@ -34,7 +34,7 @@ setup(
         'construct==2.9.41',
         'cryptography==2.3.1',
         'appdirs==1.4.3',
-        'gevent==1.2.2',
+        'gevent==1.3.7',
         'urwid==2.0.1',
         'dpkt==1.9.1',
         'aenum==2.1.2;python_version<="3.5"'
