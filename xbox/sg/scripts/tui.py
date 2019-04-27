@@ -611,7 +611,7 @@ class SGDisplay(object):
         self.loop.run()
 
     def unhandled_input(self, input):
-        if input in ('q', 'Q'):
+        if input in ('q', 'Q', 'esc'):
             self.pop_view(self)
         elif input in ('l', 'L'):
             self.view_log()
@@ -636,8 +636,8 @@ class GeventLoop(object):
         return greenlet
 
     def remove_alarm(self, handle):
-        if handle._start_event.active:
-            handle._start_event.stop()
+        if not handle.dead or handle.ready():
+            handle.kill()
             return True
         return False
 
@@ -690,7 +690,7 @@ def load_consoles(filepath):
         with open(filepath, 'r') as fh:
             consoles = json.load(fh)
         return [Console.from_dict(c) for c in consoles]
-    except FileNotFoundError as e:
+    except FileNotFoundError:
         return []
 
 
