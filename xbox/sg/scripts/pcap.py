@@ -9,16 +9,17 @@ import shutil
 import string
 import textwrap
 import argparse
-from binascii import unhexlify, hexlify
+from binascii import unhexlify
 
 import dpkt
 
 from xbox.sg import packer
 from xbox.sg.crypto import Crypto
-from xbox.sg.enum import PacketType, MessageType
+from xbox.sg.enum import PacketType
 
 from construct.lib import containers
 containers.setGlobalPrintFullStrings(True)
+
 
 def packet_filter(filepath):
     with open(filepath, 'rb') as fh:

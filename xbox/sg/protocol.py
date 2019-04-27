@@ -169,6 +169,7 @@ class CoreProtocol(DatagramServer):
 
             if result:
                 return result
+
             raise ProtocolError("Exceeded retries")
         elif msg.header.pkt_type == PacketType.ConnectRequest:
             log.debug("Sending ConnectRequest to %s", addr, extra={'_msg': msg})
@@ -239,7 +240,7 @@ class CoreProtocol(DatagramServer):
                 self._on_message(msg, channel)
             else:
                 self._on_unk(msg)
-        except Exception as e:
+        except Exception:
             log.exception("Exception in CoreProtocol datagram handler")
 
     def _await_ack(self, identifier, timeout=5):

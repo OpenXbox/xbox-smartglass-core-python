@@ -488,7 +488,7 @@ class TextManager(Manager):
     def got_active_session(self):
         """
         Check whether a text session is active
-        
+
         Returns:
             bool: Returns `True` if any text session is active, `False` otherwise
         """
@@ -498,7 +498,7 @@ class TextManager(Manager):
     def current_text_version(self):
         """
         Current Text version
-        
+
         Returns:
              int: Current Text Version
         """
@@ -513,7 +513,7 @@ class TextManager(Manager):
     def text_session_id(self):
         """
         Current Text session id
-        
+
         Returns:
             int: Text session id if existing, `None` otherwise
         """
@@ -524,7 +524,7 @@ class TextManager(Manager):
     def text_options(self):
         """
         Current Text options
-        
+
         Returns:
             :class:`TextOption`: Text options if existing, `None` otherwise
         """
@@ -535,7 +535,7 @@ class TextManager(Manager):
     def text_input_scope(self):
         """
         Current Text input scope
-        
+
         Returns:
             :class:`TextInputScope`: Text input scope if existing, `None` otherwise
         """
@@ -546,7 +546,7 @@ class TextManager(Manager):
     def max_text_length(self):
         """
         Maximum Text length
-        
+
         Returns:
             int: Max text length if existing, `None` otherwise
         """
@@ -557,7 +557,7 @@ class TextManager(Manager):
     def text_locale(self):
         """
         Test
-        
+
         Returns:
             str: Text locale if existing, `None` otherwise
         """
@@ -568,7 +568,7 @@ class TextManager(Manager):
     def text_prompt(self):
         """
         Test
-        
+
         Returns:
             str: Text prompt if existing, `None` otherwise
         """

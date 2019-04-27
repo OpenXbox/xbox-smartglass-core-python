@@ -17,7 +17,7 @@ can be used:
 4. The `salted shared secret` is hashed using `SHA-512`
 5. The `salted & hashed shared secret` is split into the following
    individual keys:
-    
+
     * bytes  0-16: Encryption key (AES 128-CBC)
     * bytes 16-32: Initialization Vector key
     * bytes 32-64: Hashing key (HMAC SHA-256)
