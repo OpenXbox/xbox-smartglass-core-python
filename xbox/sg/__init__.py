@@ -1,6 +1,7 @@
-# -*- coding: utf-8 -*-
-
-"""Top-level package for xbox-smartglass-core-python."""
+"""
+Meta package for xbox-smartglass-core-python.
+Version and author information.
+"""
 
 __author__ = """OpenXbox"""
 __version__ = '1.0.12'
