@@ -1,0 +1,21 @@
+{
+  "response": "GetLiveTVInfo",
+  "msgid": "xV5X1YCB.17",
+  "params": {
+    "inHdmiMode": "0",
+    "streamingPort": "10242",
+    "pauseBufferInfo": {
+      "Enabled": "1",
+      "MaxBufferSize": "18000000000",
+      "BufferStart": "131688132168080320",
+      "BufferEnd": "131688151636700238",
+      "BufferCurrent": "131688132168080320",
+      "Epoch": "0",
+      "CurrentTime": "131688151636836518",
+      "IsDvr": false
+    },
+    "currentHdmiChannelId": "731cd976-c1e9-6b95-4799-e6757d02cab1_3SATHD_1",
+    "currentTunerChannelId": "bb1ca492-232b-adfe-1f39-d010eabf179e_MSAHD_16",
+    "tunerChannelType": "televisionChannel"
+  }
+}

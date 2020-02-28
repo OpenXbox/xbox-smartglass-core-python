@@ -19,6 +19,7 @@ Welcome to Xbox-Smartglass-Core's documentation!
    source/xbox.sg.factory
    source/xbox.sg.scripts
    source/xbox.auxiliary.scripts
+   source/xbox.stump
 
 Indices and tables
 ==================

@@ -1,0 +1,31 @@
+{
+  "response": "GetHeadendInfo",
+  "msgid": "xV5X1YCB.14",
+  "params": {
+    "headendId": "516b9ea7-5292-97ec-e7d4-f843fab6d392",
+    "providerName": "Sky Deutschland",
+    "streamingPort": "10242",
+    "headendLocale": "de-DE",
+    "preferredProvider": "29045393",
+    "providers": [
+      {
+        "headendId": "516B9EA7-5292-97EC-E7D4-F843FAB6D392",
+        "providerName": "Sky Deutschland",
+        "source": "hdmi",
+        "titleId": "162615AD",
+        "filterPreference": "ALL",
+        "canStream": "false"
+      },
+      {
+        "headendId": "0A7FB88A-960B-C2E3-9975-7C86C5FA6C49",
+        "providerName": "Freenet",
+        "source": "tuner",
+        "titleId": "162615AD",
+        "filterPreference": "ALL",
+        "canStream": "true"
+      }
+    ],
+    "blockExplicitContentPerShow": false,
+    "dvrEnabled": false
+  }
+}

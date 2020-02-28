@@ -11,7 +11,7 @@ setup(
     description="A library to interact with the Xbox One gaming console via the SmartGlass protocol.",
     long_description=open('README.rst').read() + '\n\n' + open('HISTORY.rst').read(),
     license="GPL",
-    keywords="xbox one smartglass auxiliary fallout title",
+    keywords="xbox one smartglass auxiliary fallout title stump tv streaming livetv",
     url="https://github.com/OpenXbox/xbox-smartglass-core-python",
     packages=[
         'xbox.sg',
@@ -19,7 +19,8 @@ setup(
         'xbox.sg.scripts',
         'xbox.sg.packet',
         'xbox.auxiliary',
-        'xbox.auxiliary.scripts'
+        'xbox.auxiliary.scripts',
+        'xbox.stump'
     ],
     namespace_packages=['xbox'],
     zip_safe=False,
@@ -42,7 +43,8 @@ setup(
         'gevent==1.3.7',
         'urwid==2.0.1',
         'dpkt==1.9.1',
-        'aenum==2.1.2;python_version<="3.5"'
+        'aenum==2.1.2;python_version<="3.5"',
+        'marshmallow-objects'
     ],
     tests_require=[
         'pytest',

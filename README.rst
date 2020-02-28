@@ -27,6 +27,7 @@ Features
 * Power on / off the console
 * Get system info (running App/Game/Title, dashboard version)
 * Media player control (seeing content id, content app, playback actions etc.)
+* Stump protocol (Live-TV Streaming / IR control)
 * Title / Auxiliary stream protocol (f.e. Fallout 4 companion app)
 
 Dependencies

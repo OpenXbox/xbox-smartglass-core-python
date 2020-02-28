@@ -1,0 +1,8 @@
+{
+  "request": "SendKey",
+  "msgid": "xV5X1YCB.18",
+  "params": {
+    "button_id": "btn.select",
+    "device_id": null
+  }
+}

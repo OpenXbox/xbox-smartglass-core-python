@@ -56,6 +56,17 @@ def packets():
 
     return data
 
+@pytest.fixture(scope='session')
+def stump_json():
+    # Who cares about RAM anyway?
+    data = {}
+    data_path = os.path.join(os.path.dirname(__file__), 'data', 'stump_json')
+    for f in os.listdir(data_path):
+        with open(os.path.join(data_path, f), 'rt') as fh:
+            data[f] = json.load(fh)
+
+    return data
+
 
 @pytest.fixture(scope='session')
 def decrypted_packets(packets, crypto):

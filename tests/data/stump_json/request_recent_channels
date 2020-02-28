@@ -1,0 +1,8 @@
+{
+  "request": "GetRecentChannels",
+  "msgid": "xV5X1YCB.16",
+  "params": {
+    "startindex": 0,
+    "count": 50
+  }
+}

@@ -1,0 +1,39 @@
+{
+  "response": "GetAppChannelLineups",
+  "msgid": "a8ab366d-c389-4fa3-ab76-fb540c5e9f27",
+  "params": [
+    {
+      "id": "LiveTvHdmiProvider",
+      "providerName": "OneGuide",
+      "primaryColor": "ff107c10",
+      "secondaryColor": "ffebebeb",
+      "titleId": "00000000",
+      "channels": []
+    },
+    {
+      "id": "LiveTvPlaylistProvider",
+      "providerName": "OneGuide",
+      "primaryColor": "ff107c10",
+      "secondaryColor": "ffebebeb",
+      "titleId": "00000000",
+      "channels": []
+    },
+    {
+      "id": "LiveTvUsbProvider",
+      "providerName": "OneGuide",
+      "primaryColor": "ff107c10",
+      "secondaryColor": "ffebebeb",
+      "titleId": "00000000",
+      "channels": []
+    },
+    {
+      "id": "TedProvider",
+      "providerName": "TED",
+      "providerImageUrl": "http://assets.tedcdn.com/images/xbox/TED_280x64.png",
+      "primaryColor": "ffebebeb",
+      "secondaryColor": "ff000000",
+      "titleId": "5964CC45",
+      "channels": []
+    }
+  ]
+}

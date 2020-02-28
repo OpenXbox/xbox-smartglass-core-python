@@ -6,3 +6,4 @@ xbox
 
    xbox.sg
    xbox.auxiliary
+   xbox.stump

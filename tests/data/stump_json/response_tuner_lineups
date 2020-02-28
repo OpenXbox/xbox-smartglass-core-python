@@ -1,0 +1,117 @@
+{
+  "response": "GetTunerLineups",
+  "msgid": "xV5X1YCB.15",
+  "params": {
+    "providers": [
+      {
+        "headendId": "0A7FB88A-960B-C2E3-9975-7C86C5FA6C49",
+        "cqsChannels": [
+          "178442d3-2b13-e02b-9747-a3d4ebebcf62_PHOENIHD_23",
+          "4f74d25b-881f-3a59-e223-8a3c63402514_ONEHD_22",
+          "746a7737-3234-614d-bf55-04323301eb72_SWRFERN_39",
+          "bb1ca492-232b-adfe-1f39-d010eabf179e_MSAHD_16",
+          "f5072b30-a789-6195-0afc-6ab2528854ea_WDRKOELN_80",
+          "fc458347-db5a-ab9a-b982-a7f74c632730_ARTEHD_3",
+          "ff907416-852f-53a4-19ca-2f4452384db3_TG24HD_40"
+        ],
+        "foundChannels": [
+          {
+            "channelId": "000021146A000301",
+            "displayName": "Das Erste HD",
+            "channelNumber": "0"
+          },
+          {
+            "channelId": "000021146A000401",
+            "displayName": "WDR HD Aachen",
+            "channelNumber": "0"
+          },
+          {
+            "channelId": "000021146A00040A",
+            "displayName": "WDR HD Bonn",
+            "channelNumber": "0"
+          },
+          {
+            "channelId": "000021146A00040C",
+            "displayName": "Test-R",
+            "channelNumber": "0"
+          },
+          {
+            "channelId": "000021146A000622",
+            "displayName": "BR FS S\u00fcd HD (Internet)",
+            "channelNumber": "0"
+          },
+          {
+            "channelId": "000021146A000623",
+            "displayName": "ARD-alpha HD (Internet)",
+            "channelNumber": "0"
+          },
+          {
+            "channelId": "000021146A000641",
+            "displayName": "hr-fernsehen HD (Internet)",
+            "channelNumber": "0"
+          },
+          {
+            "channelId": "000021146A0006B1",
+            "displayName": "rbb Berlin HD (Internet)",
+            "channelNumber": "0"
+          },
+          {
+            "channelId": "000021146A00080C",
+            "displayName": "1LIVE (Internet)",
+            "channelNumber": "0"
+          },
+          {
+            "channelId": "000021146A00080D",
+            "displayName": "WDR 2 (Internet)",
+            "channelNumber": "0"
+          },
+          {
+            "channelId": "000021146A00080E",
+            "displayName": "WDR 3 (Internet)",
+            "channelNumber": "0"
+          },
+          {
+            "channelId": "000021146A00080F",
+            "displayName": "WDR 4 (Internet)",
+            "channelNumber": "0"
+          },
+          {
+            "channelId": "000021146A000810",
+            "displayName": "WDR 5 (Internet)",
+            "channelNumber": "0"
+          },
+          {
+            "channelId": "000021146A000811",
+            "displayName": "WDRcosmo (Internet)",
+            "channelNumber": "0"
+          },
+          {
+            "channelId": "000021146A000812",
+            "displayName": "KIRAKA (Internet)",
+            "channelNumber": "0"
+          },
+          {
+            "channelId": "000021146A000813",
+            "displayName": "1LIVE diGGi (Internet)",
+            "channelNumber": "0"
+          },
+          {
+            "channelId": "000021146A000814",
+            "displayName": "WDR Event (Internet)",
+            "channelNumber": "0"
+          },
+          {
+            "channelId": "000021146A000815",
+            "displayName": "WDR Mediathek (Internet)",
+            "channelNumber": "0"
+          },
+          {
+            "channelId": "000021146F000381",
+            "displayName": "NDR FS NDS HD",
+            "channelNumber": "0"
+          }
+        ]
+      }
+    ]
+  }
+}
