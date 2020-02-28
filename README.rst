@@ -22,6 +22,13 @@ with the Xbox One Gaming console
 
 For in-depth information, check out the documentation: (https://openxbox.github.io)
 
+Features
+--------
+* Power on / off the console
+* Get system info (running App/Game/Title, dashboard version)
+* Media player control (seeing content id, content app, playback actions etc.)
+* Title / Auxiliary stream protocol (f.e. Fallout 4 companion app)
+
 Dependencies
 ------------
 * Python >= 3.5
@@ -52,6 +59,16 @@ Authenticate first (Authentication provided by xbox-webapi-python):
 
 Now have a look in the Documentation_ how to use the provided shell-scripts!
 
+Fallout 4 relay service
+-----------------------
+To forward the title communication from the Xbox to your local host
+to use third-party Fallout 4 Pip boy applications or extensions:
+
+::
+
+    xbox-fo4-relay
+
+
 Screenshots
 -----------
 Here you can see the SmartGlass TUI (Text user interface):
@@ -76,8 +93,13 @@ Contribute
 
 Credits
 -------
+Kudos to joelday_ for figuring out the AuxiliaryStream / TitleChannel communication first!
+You can find the original implementation here: SmartGlass.CSharp_.
+
 This package uses parts of Cookiecutter_ and the `audreyr/cookiecutter-pypackage`_ project template.
 
 .. _Documentation: https://xbox-smartglass-core-python.readthedocs.io/en/latest/source/xbox.sg.scripts.html
 .. _Cookiecutter: https://github.com/audreyr/cookiecutter
 .. _`audreyr/cookiecutter-pypackage`: https://github.com/audreyr/cookiecutter-pypackage
+.. _joelday: https://github.com/joelday
+.. _SmartGlass.CSharp: https://github.com/OpenXbox/Xbox-Smartglass-csharp

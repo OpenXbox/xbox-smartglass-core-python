@@ -11,13 +11,15 @@ setup(
     description="A library to interact with the Xbox One gaming console via the SmartGlass protocol.",
     long_description=open('README.rst').read() + '\n\n' + open('HISTORY.rst').read(),
     license="GPL",
-    keywords="xbox one smartglass",
+    keywords="xbox one smartglass auxiliary fallout title",
     url="https://github.com/OpenXbox/xbox-smartglass-core-python",
     packages=[
         'xbox.sg',
         'xbox.sg.utils',
         'xbox.sg.scripts',
-        'xbox.sg.packet'
+        'xbox.sg.packet',
+        'xbox.auxiliary',
+        'xbox.auxiliary.scripts'
     ],
     namespace_packages=['xbox'],
     zip_safe=False,
@@ -29,7 +31,8 @@ setup(
         "Programming Language :: Python :: 3",
         "Programming Language :: Python :: 3.5",
         "Programming Language :: Python :: 3.6",
-        "Programming Language :: Python :: 3.7"
+        "Programming Language :: Python :: 3.7",
+        "Programming Language :: Python :: 3.8"
     ],
     install_requires=[
         'xbox-webapi>=1.1.2',
@@ -68,6 +71,7 @@ setup(
             'xbox-text=xbox.sg.scripts.text:main',
             'xbox-input=xbox.sg.scripts.input:main',
             'xbox-tui=xbox.sg.scripts.tui:main',
+            'xbox-fo4-relay=xbox.auxiliary.scripts.fo4:main'
         ]
     }
 )
