@@ -1,0 +1,22 @@
+<html>
+<head>
+    <title>OAUTH Login - OpenXbox SmartGlass REST Server</title>
+    <link rel= "stylesheet" type= "text/css" href= "{{ url_for('static',filename='style.css') }}">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<body>
+    <div class="loginbox">
+        <h3>Login via OAUTH</h3><br />
+        <p>Visit the following link: </p>
+        <p><a href="{{ oauth_url }}" target="_blank">Windows Live OAUTH - Xbox Live</a></p>
+        <br /><br />
+        <p>Please paste the resulting URL from your addressbar</p>
+        <br />
+        <form method="post">
+            <input type="text" name="redirect_uri" placeholder="Paste redirect uri" required="">
+            <input type="hidden" name="webview" value="yes">
+            <input type="submit" name="" value="Authorize">
+        </form>
+    </div>
+</body>
+</head>
+</html>

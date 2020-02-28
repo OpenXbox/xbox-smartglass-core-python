@@ -13,6 +13,10 @@ Xbox-Smartglass-Core
 .. image:: https://travis-ci.com/OpenXbox/xbox-smartglass-core-python.svg?branch=master
     :target: https://travis-ci.com/OpenXbox/xbox-smartglass-core-python
 
+.. image:: https://img.shields.io/docker/build/openxbox/xbox-smartglass-core.svg
+    :target: https://hub.docker.com/r/openxbox/xbox-smartglass-core
+    :alt: Docker Build Status
+
 .. image:: https://img.shields.io/badge/discord-OpenXbox-blue.svg
     :target: https://discord.gg/E8kkJhQ
     :alt: Discord chat channel
@@ -29,14 +33,15 @@ Features
 * Media player control (seeing content id, content app, playback actions etc.)
 * Stump protocol (Live-TV Streaming / IR control)
 * Title / Auxiliary stream protocol (f.e. Fallout 4 companion app)
+* REST Server
 
-Dependencies
-------------
-* Python >= 3.5
-* construct (https://construct.readthedocs.io/)
-* cryptography (https://cryptography.io/en/stable/)
-* gevent (http://www.gevent.org/)
-* dpkt (https://dpkt.readthedocs.io/en/latest/)
+Frameworks used
+---------------
+* construct - Binary parsing (https://construct.readthedocs.io/)
+* cryptography - cryptography magic (https://cryptography.io/en/stable/)
+* gevent - coroutines (http://www.gevent.org/)
+* dpkt - pcap parsing (https://dpkt.readthedocs.io/en/latest/)
+* Flask - REST API (https://pypi.org/project/Flask/)
 
 Install
 -------
@@ -60,8 +65,78 @@ Authenticate first (Authentication provided by xbox-webapi-python):
 
 Now have a look in the Documentation_ how to use the provided shell-scripts!
 
+REST Server
+-----------
+
+Start the REST server
+::
+    $ xbox-rest-server
+
+Incase you run into a problem, check out RestFAQ_
+
+REST Server - Authentication
+----------------------------
+
+Authenticate from scratch
+::
+
+    For non-2FA enabled account: http://localhost:5557/auth/login
+    For 2FA: http://localhost:5557/auth/oauth
+
+    # Store tokens on valid authentication
+    http://localhost:5557/auth/store
+
+Load tokens from disk
+::
+
+    http://localhost:5557/auth/load
+    http://localhost:5557/auth/refresh
+
+2FA OAuth - POST
+::
+
+    # Get authorize url
+    GET http://localhost:5557/auth/url
+    Response-Parameters (JSON): authorization_url
+
+    # Submit redirect url
+    POST http://localhost:5557/auth/oauth
+    Request-Parameters: redirect_uri
+
+Regular (non-2FA) login - POST
+::
+
+    POST http://localhost:5557/auth/login
+    Request-Parameters: email, password
+
+REST Server - General usage
+---------------------------
+
+To see all API endpoints:
+::
+
+    http://localhost:5557
+
+
+Usual usage:
+::
+
+    # (Optional) Poweron console
+    http://localhost:5557/device/<liveid>/poweron
+    # NOTE: You can specify device by ip: /device/<liveid>/poweron?addr=192.168.0.123
+    # Enumerate devices on network
+    # NOTE: You can enumerate device by specific ip: /device?addr=192.168.0.123
+    http://localhost:5557/device
+    # Connect to console
+    # NOTE: You can connect anonymously: /connect?anonymous=true
+    # .. if console allows it ..
+    http://localhost:5557/device/<liveid>/connect
+
+    # Use other API endpoints ...
+
 Fallout 4 relay service
 -----------------------
+
 To forward the title communication from the Xbox to your local host
 to use third-party Fallout 4 Pip boy applications or extensions:
 
@@ -104,3 +179,4 @@ This package uses parts of Cookiecutter_ and the `audreyr/cookiecutter-pypackage
 .. _`audreyr/cookiecutter-pypackage`: https://github.com/audreyr/cookiecutter-pypackage
 .. _joelday: https://github.com/joelday
 .. _SmartGlass.CSharp: https://github.com/OpenXbox/Xbox-Smartglass-csharp
+.. _RestFAQ: https://github.com/OpenXbox/xbox-smartglass-core-python/blob/master/REST_FAQ.md

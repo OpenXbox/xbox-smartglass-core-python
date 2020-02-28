@@ -11,7 +11,7 @@ setup(
     description="A library to interact with the Xbox One gaming console via the SmartGlass protocol.",
     long_description=open('README.rst').read() + '\n\n' + open('HISTORY.rst').read(),
     license="GPL",
-    keywords="xbox one smartglass auxiliary fallout title stump tv streaming livetv",
+    keywords="xbox one smartglass auxiliary fallout title stump tv streaming livetv rest api",
     url="https://github.com/OpenXbox/xbox-smartglass-core-python",
     packages=[
         'xbox.sg',
@@ -20,7 +20,10 @@ setup(
         'xbox.sg.packet',
         'xbox.auxiliary',
         'xbox.auxiliary.scripts',
-        'xbox.stump'
+        'xbox.stump',
+        'xbox.rest',
+        'xbox.rest.routes',
+        'xbox.rest.scripts'
     ],
     namespace_packages=['xbox'],
     zip_safe=False,
@@ -36,7 +39,7 @@ setup(
         "Programming Language :: Python :: 3.8"
     ],
     install_requires=[
-        'xbox-webapi>=1.1.2',
+        'xbox-webapi>=1.1.7',
         'construct==2.9.41',
         'cryptography==2.3.1',
         'appdirs==1.4.3',
@@ -44,7 +47,8 @@ setup(
         'urwid==2.0.1',
         'dpkt==1.9.1',
         'aenum==2.1.2;python_version<="3.5"',
-        'marshmallow-objects'
+        'marshmallow-objects',
+        'Flask'
     ],
     tests_require=[
         'pytest',
@@ -73,7 +77,8 @@ setup(
             'xbox-text=xbox.sg.scripts.text:main',
             'xbox-input=xbox.sg.scripts.input:main',
             'xbox-tui=xbox.sg.scripts.tui:main',
-            'xbox-fo4-relay=xbox.auxiliary.scripts.fo4:main'
+            'xbox-fo4-relay=xbox.auxiliary.scripts.fo4:main',
+            'xbox-rest-server=xbox.rest.scripts.rest_server:main'
         ]
     }
 )

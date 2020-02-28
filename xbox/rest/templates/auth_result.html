@@ -1,0 +1,16 @@
+<html>
+<head>
+    <title>{{ title }} - OpenXbox SmartGlass REST Server</title>
+    <link rel= "stylesheet" type= "text/css" href= "{{ url_for('static',filename='style.css') }}">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<body>
+    <div class="loginbox">
+        <h3>{{ result }}</h3><br />
+        <p>
+            {{ message }}<br />
+            <a href="{{ link_path }}">{{ link_title }}</a>
+        </p>
+    </div>
+</body>
+</head>
+</html>

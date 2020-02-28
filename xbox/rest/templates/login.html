@@ -1,0 +1,21 @@
+<html>
+<head>
+    <title>Login - OpenXbox SmartGlass REST Server</title>
+    <link rel= "stylesheet" type= "text/css" href= "{{ url_for('static',filename='style.css') }}">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<body>
+    <div class="loginbox">
+        <h3>Authenticate with Windows Live / Xbox Live</h3>
+        <form method="post">
+            <p>Email</p>
+            <input type="text" name="email" placeholder="Enter Windows Live Email" required="">
+            <p>Password</p>
+            <input type="password" name="password" placeholder="Enter Password" required="">
+            <input type="hidden" name="webview" value="yes">
+            <input type="submit" name="" value="Login">
+        </form>
+
+    </div>
+</body>
+</head>
+</html>
