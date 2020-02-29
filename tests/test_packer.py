@@ -35,7 +35,7 @@ def test_discovery_request(packets, crypto):
     assert unpacked.unprotected_payload.maximum_version == 2
 
 
-def test_discovery_response(packets, crypto):
+def test_discovery_response(packets, crypto, public_key):
     unpacked = _unpack(packets['discovery_response'], crypto)
 
     assert unpacked.header.pkt_type == enum.PacketType.DiscoveryResponse
@@ -45,10 +45,7 @@ def test_discovery_response(packets, crypto):
     assert str(unpacked.unprotected_payload.uuid) == 'DE305D54-75B4-431B-ADB2-EB6B9E546014'.lower()
     assert unpacked.unprotected_payload.last_error == 0
     assert unpacked.unprotected_payload.cert.liveid == 'FFFFFFFFFFF'
-    assert unpacked.unprotected_payload.cert.pubkey.public_numbers().encode_point() == unhexlify(
-        b'041815d5382df79bd792a8d8342fbc717eacef6a258f779279e5463573e06b'
-        b'f84c6a88fac904870bf3a26f856e65f483195c4323eef47a048f23a031da6bd0929d'
-    )
+    assert unpacked.unprotected_payload.cert.pubkey.public_numbers() == public_key.public_numbers()
 
 
 def test_connect_request(packets, crypto):

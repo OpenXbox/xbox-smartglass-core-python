@@ -31,6 +31,7 @@ import hashlib
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives.asymmetric import ec
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
+from cryptography.hazmat.primitives.serialization import Encoding, PublicFormat
 from xbox.sg.enum import PublicKeyType
 from binascii import unhexlify
 
@@ -133,7 +134,9 @@ class Crypto(object):
         self._hash_key = self._expanded_secret[32:]
 
         self._pubkey_type = PUBLIC_KEY_TYPE_MAP[type(self.pubkey.curve)]
-        self._pubkey_bytes = self.pubkey.public_numbers().encode_point()[1:]
+        self._pubkey_bytes = self.pubkey.public_bytes(
+            format=PublicFormat.UncompressedPoint,
+            encoding=Encoding.X962)[1:]
         self._foreign_pubkey = foreign_public_key
 
     @property
@@ -207,10 +210,9 @@ class Crypto(object):
                 raise ValueError("Invalid public keylength")
 
         curve = CURVE_MAP[public_key_type]
-        nums = ec.EllipticCurvePublicNumbers.from_encoded_point(
+        foreign_public_key = ec.EllipticCurvePublicKey.from_encoded_point(
             curve(), foreign_public_key
         )
-        foreign_public_key = nums.public_key(Crypto._backend)
         return cls(foreign_public_key)
 
     @classmethod

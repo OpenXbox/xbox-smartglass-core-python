@@ -40,21 +40,26 @@ def console_flags():
     return enum.PrimaryDeviceFlag.AllowAnonymousUsers | enum.PrimaryDeviceFlag.AllowAuthenticatedUsers
 
 @pytest.fixture(scope='session')
-def crypto():
-    secret = unhexlify(
-        '82bba514e6d19521114940bd65121af234c53654a8e67add7710b3725db44f77'
-        '30ed8e3da7015a09fe0f08e9bef3853c0506327eb77c9951769d923d863a2f5e'
-    )
-    return Crypto.from_shared_secret(secret)
-
-@pytest.fixture(scope='session')
-def console(console_address, console_name, uuid_dummy, console_liveid, console_flags):
-    pkey = unhexlify(
+def public_key_bytes():
+    return unhexlify(
         b'041815d5382df79bd792a8d8342fbc717eacef6a258f779279e5463573e06b'
         b'f84c6a88fac904870bf3a26f856e65f483195c4323eef47a048f23a031da6bd0929d'
     )
 
-    c = Crypto.from_bytes(pkey)
+@pytest.fixture(scope='session')
+def shared_secret_bytes():
+    return unhexlify(
+        '82bba514e6d19521114940bd65121af234c53654a8e67add7710b3725db44f77'
+        '30ed8e3da7015a09fe0f08e9bef3853c0506327eb77c9951769d923d863a2f5e'
+    )
+
+@pytest.fixture(scope='session')
+def crypto(shared_secret_bytes):
+    return Crypto.from_shared_secret(shared_secret_bytes)
+
+@pytest.fixture(scope='session')
+def console(console_address, console_name, uuid_dummy, console_liveid, console_flags, public_key_bytes):
+    c = Crypto.from_bytes(public_key_bytes)
     console = Console(
         console_address, console_name, uuid_dummy,
         console_liveid, console_flags, c.foreign_pubkey
@@ -65,15 +70,9 @@ def console(console_address, console_name, uuid_dummy, console_liveid, console_f
     console.add_manager(InputManager)
     return console
 
-
 @pytest.fixture(scope='session')
-def public_key():
-    public_key = unhexlify(
-        b'041815d5382df79bd792a8d8342fbc717eacef6a258f779279e5463573e06b'
-        b'f84c6a88fac904870bf3a26f856e65f483195c4323eef47a048f23a031da6bd0929d'
-    )
-
-    c = Crypto.from_bytes(public_key)
+def public_key(public_key_bytes):
+    c = Crypto.from_bytes(public_key_bytes)
     return c.foreign_pubkey
 
 
