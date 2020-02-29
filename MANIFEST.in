@@ -3,6 +3,8 @@ include HISTORY.rst
 include LICENSE
 include README.rst
 
+recursive-include xbox/rest/templates *
+recursive-include xbox/rest/static *
 recursive-include tests *
 recursive-exclude * __pycache__
 recursive-exclude * *.py[co]
