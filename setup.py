@@ -55,7 +55,7 @@ setup(
     ],
     extras_require={
         'dev': [
-            'bumpversion',
+            'bump2version',
             'watchdog',
             'coverage',
             'Sphinx',
