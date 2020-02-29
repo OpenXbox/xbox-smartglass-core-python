@@ -2,6 +2,29 @@
 History
 =======
 
+1.1.2  (2020-02-29)
+-------------------
+
+* Drop support for Python 3.5
+* crypto: Fix deprecated cryptography functions
+* tests: Speed up REST server tests (discovery, poweron)
+* Update all dependencies
+
+1.1.1  (2020-02-29)
+-------------------
+
+* FIX: Include static files for REST server in distributable package
+* REST: Remove deprecated packages from showing in /versions endpoint
+
+1.1.0  (2020-02-29)
+-------------------
+
+* Clean up dependencies
+* Merge in **xbox-smartglass-rest**, deprecate standalone package
+* Merge in **xbox-smartglass-stump**, deprecate standalone package
+* Merge in **xbox-smartglass-auxiliary**, deprecate standalone package
+* tui: Fix crash when bringing up command menu, support ESC to exit
+
 1.0.12 (2018-11-14)
 -------------------
 
