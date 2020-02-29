@@ -42,11 +42,11 @@ setup(
     ],
     install_requires=[
         'xbox-webapi>=1.1.8',
-        'construct==2.9.41',
-        'cryptography==2.3.1',
-        'gevent==1.3.7',
-        'dpkt==1.9.1',
-        'aenum==2.1.2;python_version<="3.5"',
+        'construct==2.10.56',
+        'cryptography==2.8',
+        'gevent==1.5a3',
+        'dpkt',
+        'aenum;python_version<="3.5"',
         'marshmallow-objects',
         'Flask'
     ],
