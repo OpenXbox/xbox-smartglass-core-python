@@ -7,7 +7,7 @@ from logging.handlers import RotatingFileHandler
 import argparse
 import logging
 from xbox.rest.app import app
-from xbox.rest.scripts import TOKENS_FILE
+from xbox.scripts import TOKENS_FILE
 
 LOG_FMT = '[%(asctime)s] %(levelname)s: %(message)s'
 
@@ -22,11 +22,18 @@ def main():
                         help='Tokenfile to load')
     parser.add_argument('--logfile', '-l',
                         help="Path for logfile")
+    parser.add_argument('-v', '--verbose', action='count', default=0,
+                        help='Set logging level')
 
     args = parser.parse_args()
 
+    # Verbose logging
+    levels = [logging.WARNING, logging.INFO, logging.DEBUG]
+    log_level = levels[min(len(levels) - 1, args.verbose)]  # capped to number of levels
+
+    print('Setting loglevel to {0}'.format(logging.getLevelName(log_level)))
     root_logger = logging.getLogger()
-    root_logger.setLevel(logging.DEBUG)
+    root_logger.setLevel(log_level)
     root_logger.addHandler(default_handler)
 
     if args.logfile:
@@ -36,7 +43,7 @@ def main():
         file_handler.setFormatter(logging.Formatter(LOG_FMT))
         root_logger.addHandler(file_handler)
 
-    app.logger.info('Starting Xbox Smartglass REST server started on {0}:{1}'.format(
+    print('Xbox Smartglass REST server started on {0}:{1}'.format(
         args.address, args.port
     ))
 
@@ -53,6 +60,7 @@ def main():
 
     server = pywsgi.WSGIServer((args.address, args.port), app)
     server.serve_forever()
+
 
 if __name__ == '__main__':
     main()
