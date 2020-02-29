@@ -10,6 +10,7 @@ setup(
     author="OpenXbox",
     description="A library to interact with the Xbox One gaming console via the SmartGlass protocol.",
     long_description=open('README.rst').read() + '\n\n' + open('HISTORY.rst').read(),
+    long_description_content_type="text/x-rst",
     license="GPL",
     keywords="xbox one smartglass auxiliary fallout title stump tv streaming livetv rest api",
     url="https://github.com/OpenXbox/xbox-smartglass-core-python",

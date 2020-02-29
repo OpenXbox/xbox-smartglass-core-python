@@ -73,6 +73,7 @@ REST Server
 
 Start the REST server
 ::
+
     $ xbox-rest-server
 
 Incase you run into a problem, check out RestFAQ_
