@@ -2,11 +2,7 @@
 Smartglass enumerations
 """
 
-from enum import Enum
-try:
-    from enum import Flag
-except ImportError:
-    from aenum import Flag
+from enum import Enum, Flag
 
 
 class PacketType(Enum):

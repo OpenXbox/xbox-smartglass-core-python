@@ -14,6 +14,7 @@ setup(
     license="GPL",
     keywords="xbox one smartglass auxiliary fallout title stump tv streaming livetv rest api",
     url="https://github.com/OpenXbox/xbox-smartglass-core-python",
+    python_requires=">=3.6",
     packages=[
         'xbox.sg',
         'xbox.sg.utils',
@@ -35,7 +36,6 @@ setup(
         "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
         "Topic :: Software Development :: Libraries :: Python Modules",
         "Programming Language :: Python :: 3",
-        "Programming Language :: Python :: 3.5",
         "Programming Language :: Python :: 3.6",
         "Programming Language :: Python :: 3.7",
         "Programming Language :: Python :: 3.8"
@@ -46,7 +46,6 @@ setup(
         'cryptography==2.8',
         'gevent==1.5a3',
         'dpkt',
-        'aenum;python_version<="3.5"',
         'marshmallow-objects',
         'Flask'
     ],
