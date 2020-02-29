@@ -15,13 +15,13 @@ def test_consolewrap_init(console):
 
 
 def test_discover():
-    discovered = ConsoleWrap.discover()
+    discovered = ConsoleWrap.discover(tries=1, blocking=False, timeout=1)
 
     assert isinstance(discovered, list)
 
 
 def test_poweron():
-    ConsoleWrap.power_on('FD0123456789')
+    ConsoleWrap.power_on('FD0123456789', tries=1, iterations=1)
 
 
 def test_media_commands(console):
