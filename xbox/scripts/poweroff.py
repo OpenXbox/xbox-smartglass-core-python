@@ -8,11 +8,12 @@ import sys
 import logging
 import argparse
 
+from xbox.scripts import TOKENS_FILE
+
 from xbox.webapi.authentication.manager import AuthenticationManager
 
 from xbox.sg.console import Console
 from xbox.sg.enum import ConnectionState
-from xbox.sg.scripts import TOKENS_FILE
 
 
 def main():

@@ -9,9 +9,10 @@ import functools
 import gevent.socket
 from gevent import signal
 
+from xbox.scripts import TOKENS_FILE
+
 from xbox.webapi.authentication.manager import AuthenticationManager
 
-from xbox.sg.scripts import TOKENS_FILE
 from xbox.sg.console import Console
 from xbox.sg.enum import ConnectionState
 from xbox.sg.manager import TextManager

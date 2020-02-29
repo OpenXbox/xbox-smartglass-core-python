@@ -18,14 +18,12 @@ setup(
     packages=[
         'xbox.sg',
         'xbox.sg.utils',
-        'xbox.sg.scripts',
         'xbox.sg.packet',
         'xbox.auxiliary',
-        'xbox.auxiliary.scripts',
         'xbox.stump',
         'xbox.rest',
         'xbox.rest.routes',
-        'xbox.rest.scripts'
+        'xbox.scripts'
     ],
     namespace_packages=['xbox'],
     zip_safe=False,
@@ -67,17 +65,17 @@ setup(
     test_suite="tests",
     entry_points={
         'console_scripts': [
-            'xbox-pcap=xbox.sg.scripts.pcap:main',
-            'xbox-discover=xbox.sg.scripts.discover:main',
-            'xbox-poweron=xbox.sg.scripts.poweron:main',
-            'xbox-poweroff=xbox.sg.scripts.poweroff:main',
-            'xbox-client=xbox.sg.scripts.client:main',
-            'xbox-recrypt=xbox.sg.scripts.recrypt:main',
-            'xbox-text=xbox.sg.scripts.text:main',
-            'xbox-input=xbox.sg.scripts.input:main',
-            'xbox-tui=xbox.sg.scripts.tui:main',
-            'xbox-fo4-relay=xbox.auxiliary.scripts.fo4:main',
-            'xbox-rest-server=xbox.rest.scripts.rest_server:main'
+            'xbox-pcap=xbox.scripts.pcap:main',
+            'xbox-discover=xbox.scripts.discover:main',
+            'xbox-poweron=xbox.scripts.poweron:main',
+            'xbox-poweroff=xbox.scripts.poweroff:main',
+            'xbox-client=xbox.scripts.client:main',
+            'xbox-recrypt=xbox.scripts.recrypt:main',
+            'xbox-text=xbox.scripts.text:main',
+            'xbox-input=xbox.scripts.input:main',
+            'xbox-tui=xbox.scripts.tui:main',
+            'xbox-fo4-relay=xbox.scripts.fo4:main',
+            'xbox-rest-server=xbox.scripts.rest_server:main'
         ]
     }
 )

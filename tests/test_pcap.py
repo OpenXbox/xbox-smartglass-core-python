@@ -1,4 +1,4 @@
-from xbox.sg.scripts import pcap
+from xbox.scripts import pcap
 
 
 def test_pcap_filter(pcap_filepath):

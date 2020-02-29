@@ -16,12 +16,13 @@ import gevent
 import gevent.select
 import gevent.signal
 
+from xbox.scripts import TOKENS_FILE, CONSOLES_FILE
+
 from xbox.webapi.scripts.tui import WebAPIDisplay
 
 from xbox.sg.console import Console
 from xbox.sg.enum import DeviceStatus, GamePadButton, MediaPlaybackStatus
 from xbox.sg.manager import InputManager, TextManager, MediaManager
-from xbox.sg.scripts import TOKENS_FILE, CONSOLES_FILE
 
 from construct.lib import containers
 containers.setGlobalPrintFullStrings(True)

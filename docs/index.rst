@@ -17,8 +17,8 @@ Welcome to Xbox-Smartglass-Core's documentation!
    source/xbox.sg.protocol
    source/xbox.sg.crypto
    source/xbox.sg.factory
-   source/xbox.sg.scripts
-   source/xbox.auxiliary.scripts
+   source/xbox.scripts
+   source/xbox.auxiliary
    source/xbox.stump
 
 Indices and tables
