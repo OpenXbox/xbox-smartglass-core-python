@@ -19,10 +19,7 @@ class SmartGlassFlaskApp(Flask):
     def smartglass_packetnames(self):
         return [
             'xbox-smartglass-core',
-            'xbox-smartglass-stump',
             'xbox-smartglass-nano',
-            'xbox-smartglass-auxiliary',
-            'xbox-smartglass-rest',
             'xbox-webapi'
         ]
 
