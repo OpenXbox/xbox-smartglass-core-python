@@ -17,8 +17,8 @@ Xbox-Smartglass-Core
     :target: https://hub.docker.com/r/openxbox/xbox-smartglass-core
     :alt: Docker Build Status
 
-.. image:: https://img.shields.io/badge/discord-OpenXbox-blue.svg
-    :target: https://discord.gg/E8kkJhQ
+.. image:: https://img.shields.io/discord/338946086775554048
+    :target: https://openxbox.org/discord
     :alt: Discord chat channel
 
 This library provides the core foundation for the smartglass protocol that is used
