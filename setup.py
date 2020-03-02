@@ -65,16 +65,20 @@ setup(
     test_suite="tests",
     entry_points={
         'console_scripts': [
+            'xbox-cli=xbox.scripts.main_cli:main',
+
+            'xbox-discover=xbox.scripts.main_cli:main_discover',
+            'xbox-poweron=xbox.scripts.main_cli:main_poweron',
+            'xbox-poweroff=xbox.scripts.main_cli:main_poweroff',
+            'xbox-repl=xbox.scripts.main_cli:main_repl'
+            'xbox-replserver=xbox.scripts.main_cli:main_replserver'
+            'xbox-textinput=xbox.scripts.main_cli:main_textinput',
+            'xbox-gamepadinput=xbox.scripts.main_cli:main_gamepadinput',
+            'xbox-tui=xbox.scripts.main_cli:main_tui',
+            'xbox-fo4-relay=xbox.scripts.main_cli:main_falloutrelay',
+
             'xbox-pcap=xbox.scripts.pcap:main',
-            'xbox-discover=xbox.scripts.discover:main',
-            'xbox-poweron=xbox.scripts.poweron:main',
-            'xbox-poweroff=xbox.scripts.poweroff:main',
-            'xbox-client=xbox.scripts.client:main',
             'xbox-recrypt=xbox.scripts.recrypt:main',
-            'xbox-text=xbox.scripts.text:main',
-            'xbox-input=xbox.scripts.input:main',
-            'xbox-tui=xbox.scripts.tui:main',
-            'xbox-fo4-relay=xbox.scripts.fo4:main',
             'xbox-rest-server=xbox.scripts.rest_server:main'
         ]
     }

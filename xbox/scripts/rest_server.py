@@ -1,64 +1,34 @@
 from gevent import monkey
 monkey.patch_all()
 from gevent import pywsgi
-from flask.logging import default_handler
-from logging.handlers import RotatingFileHandler
 
-import argparse
+from flask.logging import default_handler
+
 import logging
 from xbox.rest.app import app
-from xbox.scripts import TOKENS_FILE
+from xbox.scripts import main_cli
 
-LOG_FMT = '[%(asctime)s] %(levelname)s: %(message)s'
+LOGGER = logging.getLogger(__name__)
+
+REST_DEFAULT_SERVER_PORT = 5557
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Xbox One SmartGlass REST server")
-    parser.add_argument('--address', '-a', default='0.0.0.0',
-                        help='IP address to bind to')
-    parser.add_argument('--port', '-p', default=5557,
-                        help='Port to bind to')
-    parser.add_argument('--tokens', '-t', default=TOKENS_FILE,
-                        help='Tokenfile to load')
-    parser.add_argument('--logfile', '-l',
-                        help="Path for logfile")
-    parser.add_argument('-v', '--verbose', action='count', default=0,
-                        help='Set logging level')
+    args = main_cli.parse_arguments()
+    main_cli.handle_logging_setup(args)
 
-    args = parser.parse_args()
+    LOGGER.addHandler(default_handler)
 
-    # Verbose logging
-    levels = [logging.WARNING, logging.INFO, logging.DEBUG]
-    log_level = levels[min(len(levels) - 1, args.verbose)]  # capped to number of levels
-
-    print('Setting loglevel to {0}'.format(logging.getLevelName(log_level)))
-    root_logger = logging.getLogger()
-    root_logger.setLevel(log_level)
-    root_logger.addHandler(default_handler)
-
-    if args.logfile:
-        app.logger.info('Setting logfile path to {0}'.format(args.logfile))
-        file_handler = RotatingFileHandler(args.logfile, backupCount=2)
-        file_handler.setLevel(logging.DEBUG)
-        file_handler.setFormatter(logging.Formatter(LOG_FMT))
-        root_logger.addHandler(file_handler)
+    if args.port == 0:
+        LOGGER.info('No defaults provided, '
+                    'Setting REST server port to {0}'.format(REST_DEFAULT_SERVER_PORT))
+        args.port = REST_DEFAULT_SERVER_PORT
 
     print('Xbox Smartglass REST server started on {0}:{1}'.format(
         args.address, args.port
     ))
 
-    app.logger.debug('Setting tokenfile path to {0}'.format(args.tokens))
-    app.token_file = args.tokens
-    try:
-        app.logger.info('Trying to load & refresh tokens')
-        app.authentication_mgr.load(args.tokens)
-        app.authentication_mgr.authenticate(do_refresh=True)
-    except Exception as e:
-        app.logger.warning(
-            'Failed to authenticate with tokenfile from {0}, error: {1}'.format(args.tokens, e)
-        )
-
-    server = pywsgi.WSGIServer((args.address, args.port), app)
+    server = pywsgi.WSGIServer((args.bind, args.port), app)
     server.serve_forever()
 
 
