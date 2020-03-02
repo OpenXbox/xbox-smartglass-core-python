@@ -47,6 +47,7 @@ setup(
         'marshmallow-objects',
         'Flask'
     ],
+    setup_requires=['pytest-runner'],
     tests_require=[
         'pytest',
         'flake8',
@@ -56,10 +57,12 @@ setup(
         'dev': [
             'bump2version',
             'watchdog',
-            'coverage',
             'Sphinx',
             'wheel',
-            'twine'
+            'twine',
+            'coverage',
+            'pytest',
+            'pytest-runner'
         ]
     },
     test_suite="tests",

@@ -83,6 +83,9 @@ dist: clean ## builds source and wheel package
 	python setup.py bdist_wheel
 	ls -l dist
 
+check-meta: ## Check package metadata (setup.py)
+	python setup.py check --strict --metadata
+
 check: dist ## Check built dist package for proper layout and structure
 	twine check dist/*
 
