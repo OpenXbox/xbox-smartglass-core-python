@@ -356,7 +356,12 @@ def main(command=None):
         """
         Text user interface (powered by urwid)
         """
-        LOGGER.debug('Route: TUI')
+        # Removing stream handlers to not pollute TUI
+        for h in [sh for sh in logging.root.handlers
+                  if isinstance(sh, logging.StreamHandler)]:
+            LOGGER.debug('Removing StreamHandler {0} from root logger'.format(h))
+            logging.root.removeHandler(h)
+
         sys.exit(tui.run_tui(args.consoles, args.address,
                              args.liveid, args.tokens, args.refresh))
 
