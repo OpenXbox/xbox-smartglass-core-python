@@ -27,9 +27,16 @@ from xbox.sg import manager
 from xbox.sg.console import Console
 from xbox.sg.enum import ConnectionState
 
+# REST server imports
+from gevent import pywsgi as rest_pywsgi
+from flask.logging import default_handler as flask_default_handler
+from xbox.rest.app import app as flask_app
+
+
 LOGGER = logging.getLogger(__name__)
 
-REPL_SERVER_PORT = 5558
+REST_DEFAULT_SERVER_PORT = 5557
+REPL_DEFAULT_SERVER_PORT = 5558
 
 
 class Commands(object):
@@ -331,9 +338,8 @@ def main(command=None):
     LOGGER.debug('Chosen command: {0}'.format(command))
 
     if command == Commands.RESTServer:
-        LOGGER.error('Please use dedicated \'xbox-rest-server\' script'
-                     ' to start the REST server!')
-        sys.exit(ExitCodes.ArgParsingError)
+        LOGGER.info('Make sure you used the dedicated \'xbox-rest-server\' script'
+                    ' to start the REST server!')
 
     elif 'interactive' in args and args.interactive and \
          (args.address or args.liveid):
@@ -352,7 +358,25 @@ def main(command=None):
 
     print('Xbox SmartGlass main client started')
 
-    if command == Commands.TUI:
+    if command == Commands.RESTServer:
+        """
+        REST Server
+        """
+        LOGGER.addHandler(flask_default_handler)
+
+        if args.port == 0:
+            LOGGER.info('No defaults provided, '
+                        'Setting REST server port to {0}'.format(REST_DEFAULT_SERVER_PORT))
+            args.port = REST_DEFAULT_SERVER_PORT
+
+        print('Xbox Smartglass REST server started on {0}:{1}'.format(
+            args.bind, args.port
+        ))
+
+        server = rest_pywsgi.WSGIServer((args.bind, args.port), flask_app)
+        server.serve_forever()
+        sys.exit(ExitCodes.OK)
+    elif command == Commands.TUI:
         """
         Text user interface (powered by urwid)
         """
@@ -492,8 +516,8 @@ def main(command=None):
 
             if args.port == 0:
                 LOGGER.info('No defaults provided, '
-                            'Setting REPL server port to {0}'.format(REPL_SERVER_PORT))
-                args.port = REPL_SERVER_PORT
+                            'Setting REPL server port to {0}'.format(REPL_DEFAULT_SERVER_PORT))
+                args.port = REPL_DEFAULT_SERVER_PORT
 
             startinfo = 'Starting up REPL server @ {0}:{1}'.format(args.bind, args.port)
             print(startinfo)
