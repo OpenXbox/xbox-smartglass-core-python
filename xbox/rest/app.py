@@ -1,4 +1,4 @@
-from flask import Flask, jsonify, request, render_template, redirect
+from flask import Flask, jsonify
 from http import HTTPStatus
 from xbox.webapi.authentication.manager import AuthenticationManager
 from xbox.webapi.api.client import XboxLiveClient
@@ -50,7 +50,8 @@ class SmartGlassFlaskApp(Flask):
         self.logger.error(str(ret))
         return jsonify(ret), code
 
-    def success(self, **kwargs):
+    @staticmethod
+    def success(**kwargs):
         ret = {'success': True}
         if kwargs:
             ret.update(kwargs)

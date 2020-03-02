@@ -1,5 +1,4 @@
 import io
-import pytest
 
 from xbox.sg.crypto import PKCS7Padding
 from xbox.auxiliary import packer

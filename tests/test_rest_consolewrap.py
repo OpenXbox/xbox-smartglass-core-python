@@ -168,7 +168,7 @@ def test_media_status(console, media_state, console_status, console_status_with_
     console._connection_state = enum.ConnectionState.Disconnecting
     assert ConsoleWrap(console).media_status is None
 
-    console._console_status = console_status # miss-matched apps
+    console._console_status = console_status  # miss-matched apps
     console._connection_state = enum.ConnectionState.Connected
     state = ConsoleWrap(console).media_status
     assert ConsoleWrap(console).media_status is None

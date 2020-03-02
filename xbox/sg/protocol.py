@@ -921,7 +921,8 @@ class FragmentManager(object):
 
         return None
 
-    def _encode(self, obj):
+    @staticmethod
+    def _encode(obj):
         """
         Dump a dict as json string, then encode with base64
 
@@ -934,7 +935,8 @@ class FragmentManager(object):
         bytestr = json.dumps(obj, separators=(',', ':'), sort_keys=True).encode('utf-8')
         return base64.b64encode(bytestr).decode('utf-8')
 
-    def _decode(self, data):
+    @staticmethod
+    def _decode(data):
         """
         Decode a base64 encoded json object
 

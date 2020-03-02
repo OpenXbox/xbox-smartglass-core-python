@@ -140,7 +140,6 @@ def acknowledge(low_watermark, processed_list, rejected_list, **kwargs):
     Assemble acknowledgement message.
 
     Args:
-        channel_id (int): Target Channel Id to send the message to.
         low_watermark (int): Low Watermark.
         processed_list (list): List of processed message sequence numbers.
         rejected_list (list): List of rejected message sequence numbers.
@@ -165,7 +164,6 @@ def json(text, **kwargs):
     Assemble JSON message.
 
     Args:
-        channel_id (int): Target Channel Id to send the message to.
         text (str): Text string.
 
     Returns:

@@ -6,6 +6,7 @@ from functools import wraps
 Decorators
 """
 
+
 def console_connected(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
@@ -41,7 +42,7 @@ def require_authentication(f):
     def decorated_function(*args, **kwargs):
         if not app.authentication_mgr.authenticated:
             return app.error('Not authenticated for Xbox Live', HTTPStatus.UNAUTHORIZED)
-        
+
         kwargs['client'] = app.xbl_client
         return f(*args, **kwargs)
     return decorated_function

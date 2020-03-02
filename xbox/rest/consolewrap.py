@@ -7,6 +7,7 @@ from xbox.stump.manager import StumpManager
 
 log = logging.getLogger()
 
+
 class ConsoleWrap(object):
     def __init__(self, console):
         self.console = console

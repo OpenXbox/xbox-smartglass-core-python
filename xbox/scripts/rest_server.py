@@ -1,12 +1,13 @@
+import logging
+
 from gevent import monkey
 monkey.patch_all()
-from gevent import pywsgi
+from gevent import pywsgi  # noqa: E402
 
-from flask.logging import default_handler
+from flask.logging import default_handler  # noqa: E402
 
-import logging
-from xbox.rest.app import app
-from xbox.scripts import main_cli
+from xbox.rest.app import app  # noqa: E402
+from xbox.scripts import main_cli  # noqa: E402
 
 LOGGER = logging.getLogger(__name__)
 

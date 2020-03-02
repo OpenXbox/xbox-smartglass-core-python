@@ -1,4 +1,3 @@
-import pytest
 import uuid
 from binascii import unhexlify
 

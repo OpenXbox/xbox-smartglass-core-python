@@ -5,6 +5,7 @@ from xbox.webapi.authentication.manager import AuthenticationManager,\
     AuthenticationException, TwoFactorAuthRequired
 from . import routes
 
+
 @routes.route('/auth')
 def authentication_overview():
     tokens = {
@@ -26,11 +27,11 @@ def authentication_overview():
 def authentication_login():
     if app.authentication_mgr.authenticated:
         return render_template('auth_result.html',
-                                title='Already signed in',
-                                result='Already signed in',
-                                message='You are already signed in, please logout first!',
-                                link_path='/auth/logout',
-                                link_title='Logout')
+                               title='Already signed in',
+                               result='Already signed in',
+                               message='You are already signed in, please logout first!',
+                               link_path='/auth/logout',
+                               link_title='Logout')
     else:
         return render_template('login.html')
 
@@ -55,26 +56,26 @@ def authentication_login_post():
     except AuthenticationException as e:
         if is_webview:
             return render_template('auth_result.html',
-                                    title='Login fail',
-                                    result='Login failed',
-                                    message='Error: {0}!'.format(str(e)),
-                                    link_path='/auth/login',
-                                    link_title='Try again')
+                                   title='Login fail',
+                                   result='Login failed',
+                                   message='Error: {0}!'.format(str(e)),
+                                   link_path='/auth/login',
+                                   link_title='Try again')
         else:
             return app.error('Login failed! Error: {0}'.format(str(e)),
-                                two_factor_required=False)
+                             two_factor_required=False)
 
     except TwoFactorAuthRequired:
         if is_webview:
             return render_template('auth_result.html',
-                                    title='Login fail',
-                                    result='Login failed, 2FA required',
-                                    message='Please click the following link to authenticate via OAUTH',
-                                    link_path='/auth/oauth',
-                                    link_title='Login via OAUTH')
+                                   title='Login fail',
+                                   result='Login failed, 2FA required',
+                                   message='Please click the following link to authenticate via OAUTH',
+                                   link_path='/auth/oauth',
+                                   link_title='Login via OAUTH')
         else:
             return app.error('Login failed, 2FA required!',
-                                two_factor_required=True)
+                             two_factor_required=True)
 
     except Exception as e:
         return app.error('Unhandled authentication error: {0}'.format(str(e)),
@@ -82,11 +83,11 @@ def authentication_login_post():
 
     if is_webview:
         return render_template('auth_result.html',
-                                title='Login success',
-                                result='Login succeeded',
-                                message='Welcome {}!'.format(app.logged_in_gamertag),
-                                link_path='/auth/logout',
-                                link_title='Logout')
+                               title='Login success',
+                               result='Login succeeded',
+                               message='Welcome {}!'.format(app.logged_in_gamertag),
+                               link_path='/auth/logout',
+                               link_title='Logout')
     else:
         return app.success(message='Login success', gamertag=app.logged_in_gamertag)
 
@@ -97,11 +98,12 @@ def authentication_logout():
         return render_template('logout.html', username=app.logged_in_gamertag)
     else:
         return render_template('auth_result.html',
-                                title='Logout failed',
-                                result='Logout failed',
-                                message='You are currently not logged in',
-                                link_path='/auth/login',
-                                link_title='Login')
+                               title='Logout failed',
+                               result='Logout failed',
+                               message='You are currently not logged in',
+                               link_path='/auth/login',
+                               link_title='Login')
+
 
 @routes.route('/auth/logout', methods=['POST'])
 def authentication_logout_post():
@@ -110,13 +112,14 @@ def authentication_logout_post():
     app.reset_authentication()
     if is_webview:
         return render_template('auth_result.html',
-                                title='Logout success',
-                                result='Logout succeeded',
-                                message='Goodbye {0}!'.format(username),
-                                link_path='/auth/login',
-                                link_title='Login')
+                               title='Logout success',
+                               result='Logout succeeded',
+                               message='Goodbye {0}!'.format(username),
+                               link_path='/auth/login',
+                               link_title='Login')
     else:
         return app.success(message='Logout succeeded')
+
 
 @routes.route('/auth/url')
 def authentication_get_auth_url():
@@ -127,14 +130,14 @@ def authentication_get_auth_url():
 def authentication_oauth():
     if app.authentication_mgr.authenticated:
         return render_template('auth_result.html',
-                                title='Already signed in',
-                                result='Already signed in',
-                                message='You are already signed in, please logout first!',
-                                link_path='/auth/logout',
-                                link_title='Logout')
+                               title='Already signed in',
+                               result='Already signed in',
+                               message='You are already signed in, please logout first!',
+                               link_path='/auth/logout',
+                               link_title='Logout')
     else:
         return render_template('login_oauth.html',
-                                oauth_url=AuthenticationManager.generate_authorization_url())
+                               oauth_url=AuthenticationManager.generate_authorization_url())
 
 
 @routes.route('/auth/oauth', methods=['POST'])
@@ -154,21 +157,21 @@ def authentication_oauth_post():
     except Exception as e:
         if is_webview:
             return render_template('auth_result.html',
-                                    title='Login fail',
-                                    result='Login failed',
-                                    message='Error message: {0}'.format(str(e)),
-                                    link_path='/auth/login',
-                                    link_title='Try again')
+                                   title='Login fail',
+                                   result='Login failed',
+                                   message='Error message: {0}'.format(str(e)),
+                                   link_path='/auth/login',
+                                   link_title='Try again')
         else:
             return app.error('Login failed, error: {0}'.format(str(e)))
 
     if is_webview:
         return render_template('auth_result.html',
-                                title='Login success',
-                                result='Login succeeded',
-                                message='Welcome {}!'.format(app.logged_in_gamertag),
-                                link_path='/auth/logout',
-                                link_title='Logout')
+                               title='Login success',
+                               result='Login succeeded',
+                               message='Welcome {}!'.format(app.logged_in_gamertag),
+                               link_path='/auth/logout',
+                               link_title='Logout')
     else:
         return app.success(message='Login success', gamertag=app.logged_in_gamertag)
 

@@ -182,7 +182,7 @@ def parse_arguments(args=None):
     REST server
     NOTE: Only argument parsing is handled in here,
           The actual start code is in a dedicated script.
-          
+
           This is required due to gevent monkey patching for
           the FLASK web-framework to work.
     """
@@ -470,10 +470,10 @@ def main(command=None):
         sys.exit(ExitCodes.OK)
 
     elif command == Commands.REPL or \
-         command == Commands.REPLServer:
+            command == Commands.REPLServer:
 
         banner = 'You are connected to the console @ {0}\n'\
-            .format(console.address)
+                 .format(console.address)
         banner += 'Type in \'console\' to acccess the object\n'
         banner += 'Type in \'exit()\' to quit the application'
 

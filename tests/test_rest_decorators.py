@@ -1,4 +1,4 @@
-from xbox.rest import decorators
+from xbox.rest import decorators  # noqa: F401
 
 
 def test_console_exists():
