@@ -2,6 +2,7 @@ import pytest
 from binascii import unhexlify
 from xbox.sg.enum import PublicKeyType
 
+
 def test_generate_random_iv(crypto):
     rand_iv = crypto.generate_iv()
     rand_iv_2 = crypto.generate_iv()

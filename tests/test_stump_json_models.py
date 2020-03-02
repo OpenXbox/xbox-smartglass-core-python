@@ -2,6 +2,7 @@ import pytest
 from xbox.stump import json_model
 from xbox.stump.enum import Message
 
+
 def test_stump_response(stump_json):
     data = stump_json['response_recent_channels']
     msg = json_model.deserialize_stump_message(data)

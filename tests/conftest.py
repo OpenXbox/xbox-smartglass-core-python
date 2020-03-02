@@ -19,25 +19,31 @@ from xbox.stump.manager import StumpManager
 from xbox.rest.app import app as rest_app
 from xbox.rest.consolewrap import ConsoleWrap
 
+
 @pytest.fixture(scope='session')
 def uuid_dummy():
     return uuid.UUID('de305d54-75b4-431b-adb2-eb6b9e546014')
+
 
 @pytest.fixture(scope='session')
 def console_address():
     return '10.11.12.12'
 
+
 @pytest.fixture(scope='session')
 def console_name():
     return 'TestConsole'
+
 
 @pytest.fixture(scope='session')
 def console_liveid():
     return 'FD0000123456789'
 
+
 @pytest.fixture(scope='session')
 def console_flags():
     return enum.PrimaryDeviceFlag.AllowAnonymousUsers | enum.PrimaryDeviceFlag.AllowAuthenticatedUsers
+
 
 @pytest.fixture(scope='session')
 def public_key_bytes():
@@ -46,6 +52,7 @@ def public_key_bytes():
         b'f84c6a88fac904870bf3a26f856e65f483195c4323eef47a048f23a031da6bd0929d'
     )
 
+
 @pytest.fixture(scope='session')
 def shared_secret_bytes():
     return unhexlify(
@@ -53,9 +60,11 @@ def shared_secret_bytes():
         '30ed8e3da7015a09fe0f08e9bef3853c0506327eb77c9951769d923d863a2f5e'
     )
 
+
 @pytest.fixture(scope='session')
 def crypto(shared_secret_bytes):
     return Crypto.from_shared_secret(shared_secret_bytes)
+
 
 @pytest.fixture(scope='session')
 def console(console_address, console_name, uuid_dummy, console_liveid, console_flags, public_key_bytes):
@@ -69,6 +78,7 @@ def console(console_address, console_name, uuid_dummy, console_liveid, console_f
     console.add_manager(TextManager)
     console.add_manager(InputManager)
     return console
+
 
 @pytest.fixture(scope='session')
 def public_key(public_key_bytes):
@@ -87,6 +97,7 @@ def packets():
 
     return data
 
+
 @pytest.fixture(scope='session')
 def stump_json():
     # Who cares about RAM anyway?
@@ -101,7 +112,8 @@ def stump_json():
 
 @pytest.fixture(scope='session')
 def decrypted_packets(packets, crypto):
-    return {k:packer.unpack(v, crypto) for k,v in packets.items()}
+    return {k: packer.unpack(v, crypto) for k, v in packets.items()}
+
 
 @pytest.fixture(scope='session')
 def pcap_filepath():
@@ -140,10 +152,12 @@ def aux_crypto(decrypted_packets):
     connection_info = decrypted_packets['auxiliary_stream_connection_info'].protected_payload.connection_info
     return AuxiliaryStreamCrypto.from_connection_info(connection_info)
 
+
 @pytest.fixture
 def rest_client():
     rest_app.config['TESTING'] = True
     yield rest_app
+
 
 @pytest.fixture(scope='session')
 def media_state():
@@ -182,6 +196,7 @@ def active_title():
     )
     return struct
 
+
 @pytest.fixture(scope='session')
 def active_media_title():
     struct = packet.message._active_title(
@@ -196,6 +211,7 @@ def active_media_title():
     )
     return struct
 
+
 @pytest.fixture(scope='session')
 def console_status(active_title):
     return packet.message.console_status(
@@ -209,6 +225,7 @@ def console_status(active_title):
         ]
     )
 
+
 @pytest.fixture(scope='session')
 def console_status_with_media(active_media_title):
     return packet.message.console_status(
@@ -221,6 +238,7 @@ def console_status_with_media(active_media_title):
             active_media_title
         ]
     )
+
 
 @pytest.fixture
 def rest_client_connected_media_console_status(rest_client, console, media_state, console_status_with_media):

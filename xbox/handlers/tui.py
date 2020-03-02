@@ -4,11 +4,9 @@ Terminal UI Smartglass Client
 Supported functions: Poweron/off, launch title, gamepad input and entering text.
 Additional shows console status (active titles, OS version, locale) and media state.
 """
-import sys
 import json
 import urwid
 import logging
-import argparse
 from binascii import hexlify
 from collections import deque
 
@@ -18,10 +16,10 @@ import gevent.signal
 
 from xbox.webapi.scripts.tui import WebAPIDisplay
 
+from xbox.scripts import ExitCodes
 from xbox.sg.console import Console
 from xbox.sg.enum import DeviceStatus, GamePadButton, MediaPlaybackStatus
 from xbox.sg.manager import InputManager, TextManager, MediaManager
-from xbox.sg.scripts import TOKENS_FILE, CONSOLES_FILE
 
 from construct.lib import containers
 containers.setGlobalPrintFullStrings(True)
@@ -700,31 +698,35 @@ def save_consoles(filepath, consoles):
         json.dump(consoles, fh, indent=2)
 
 
-def main():
-    parser = argparse.ArgumentParser(description="Basic text user interface")
-    parser.add_argument('--tokens', '-t', default=TOKENS_FILE,
-                        help="Token file, created by xbox-authenticate script")
-    parser.add_argument('--consoles', '-c', default=CONSOLES_FILE,
-                        help="Previously discovered consoles")
-    args = parser.parse_args()
+def run_tui(consoles_filepath, addr, liveid, tokens_filepath, do_refresh):
+    """
+    Main entrypoint for TUI
 
+    Args:
+        consoles_filepath (str): Console json filepath
+        addr (str): IP address of console
+        liveid (str): LiveID to connect to
+        tokens_filepath (str): Tokens filepath
+        do_refresh (bool): Do token refresh
+
+    Returns:
+        ExitCodes (int): Exit code
+    """
     consoles = []
-    if args.consoles:
-        consoles = load_consoles(args.consoles)
+    if consoles_filepath:
+        consoles = load_consoles(consoles_filepath)
 
-    app = WebAPIDisplay(args.tokens)
+    app = WebAPIDisplay(tokens_filepath)
     auth_success = app.run()
 
     if not auth_success:
         print('tui: Cannot continue without valid authentication data. bye!')
-        sys.exit(1)
+        return ExitCodes.AuthenticationError
 
     app = SGDisplay(consoles, app.auth_mgr)
     app.run()
 
-    if args.consoles:
-        save_consoles(args.consoles, app.consoles.consoles)
+    if consoles_filepath:
+        save_consoles(consoles_filepath, app.consoles.consoles)
 
-
-if __name__ == '__main__':
-    main()
+    return ExitCodes.OK

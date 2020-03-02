@@ -64,9 +64,10 @@ Ready to contribute? Here's how to set up `xbox-smartglass-core-python` for loca
 
     $ git clone git@github.com:your_name_here/xbox-smartglass-core-python.git
 
-3. Install your local copy into a virtualenv. Assuming you have virtualenvwrapper installed, this is how you set up your fork for local development::
+3. Install your local copy into a virtual environment. This is how you set up your fork for local development::
 
-    $ mkvirtualenv xbox-smartglass-core
+    $ python -m venv ~/pyvenv/xbox-smartglass
+    $ source ~/pyvenv/xbox-smartglass/bin/activate
     $ cd xbox-smartglass-core-python
     $ pip install -e .[dev]
     $ python setup.py develop

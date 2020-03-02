@@ -191,7 +191,8 @@ class XSwitch(construct.Switch):
             return super(XSwitch, self)._emitparse(code)
 
         fname = "factory_%s" % code.allocateId()
-        code.append("%s = {%s}" % (fname, ", ".join("%r : lambda io,this: %s" % (key.value, sc._compileparse(code)) for key, sc in self.cases.items()), ))
+        code.append("%s = {%s}" % (fname, ", ".join("%r : lambda io,this: %s" % (key.value, sc._compileparse(code))
+                                                    for key, sc in self.cases.items()), ))
 
         defaultfname = "compiled_%s" % code.allocateId()
         code.append("%s = lambda io,this: %s" % (defaultfname, self.default._compileparse(code), ))

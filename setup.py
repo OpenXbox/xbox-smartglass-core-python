@@ -8,6 +8,7 @@ setup(
     name="xbox-smartglass-core",
     version="1.1.2",
     author="OpenXbox",
+    author_email="noreply@openxbox.org",
     description="A library to interact with the Xbox One gaming console via the SmartGlass protocol.",
     long_description=open('README.rst').read() + '\n\n' + open('HISTORY.rst').read(),
     long_description_content_type="text/x-rst",
@@ -18,14 +19,12 @@ setup(
     packages=[
         'xbox.sg',
         'xbox.sg.utils',
-        'xbox.sg.scripts',
         'xbox.sg.packet',
         'xbox.auxiliary',
-        'xbox.auxiliary.scripts',
         'xbox.stump',
         'xbox.rest',
         'xbox.rest.routes',
-        'xbox.rest.scripts'
+        'xbox.scripts'
     ],
     namespace_packages=['xbox'],
     zip_safe=False,
@@ -49,6 +48,7 @@ setup(
         'marshmallow-objects',
         'Flask'
     ],
+    setup_requires=['pytest-runner'],
     tests_require=[
         'pytest',
         'flake8',
@@ -58,26 +58,30 @@ setup(
         'dev': [
             'bump2version',
             'watchdog',
-            'coverage',
             'Sphinx',
             'wheel',
-            'twine'
+            'twine',
+            'coverage',
+            'pytest',
+            'pytest-runner'
         ]
     },
     test_suite="tests",
     entry_points={
         'console_scripts': [
-            'xbox-pcap=xbox.sg.scripts.pcap:main',
-            'xbox-discover=xbox.sg.scripts.discover:main',
-            'xbox-poweron=xbox.sg.scripts.poweron:main',
-            'xbox-poweroff=xbox.sg.scripts.poweroff:main',
-            'xbox-client=xbox.sg.scripts.client:main',
-            'xbox-recrypt=xbox.sg.scripts.recrypt:main',
-            'xbox-text=xbox.sg.scripts.text:main',
-            'xbox-input=xbox.sg.scripts.input:main',
-            'xbox-tui=xbox.sg.scripts.tui:main',
-            'xbox-fo4-relay=xbox.auxiliary.scripts.fo4:main',
-            'xbox-rest-server=xbox.rest.scripts.rest_server:main'
+            'xbox-cli=xbox.scripts.main_cli:main',
+            'xbox-discover=xbox.scripts.main_cli:main_discover',
+            'xbox-poweron=xbox.scripts.main_cli:main_poweron',
+            'xbox-poweroff=xbox.scripts.main_cli:main_poweroff',
+            'xbox-repl=xbox.scripts.main_cli:main_repl',
+            'xbox-replserver=xbox.scripts.main_cli:main_replserver',
+            'xbox-textinput=xbox.scripts.main_cli:main_textinput',
+            'xbox-gamepadinput=xbox.scripts.main_cli:main_gamepadinput',
+            'xbox-tui=xbox.scripts.main_cli:main_tui',
+            'xbox-fo4-relay=xbox.scripts.main_cli:main_falloutrelay',
+            'xbox-pcap=xbox.scripts.pcap:main',
+            'xbox-recrypt=xbox.scripts.recrypt:main',
+            'xbox-rest-server=xbox.scripts.rest_server:main'
         ]
     }
 )

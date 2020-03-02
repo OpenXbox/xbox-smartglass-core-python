@@ -1,5 +1,5 @@
 import logging
-import binascii
+
 import gevent
 from gevent.server import StreamServer
 

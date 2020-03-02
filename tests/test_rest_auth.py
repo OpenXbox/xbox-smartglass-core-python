@@ -40,7 +40,7 @@ def test_auth_login_post_no_params(rest_client):
 
 def test_auth_login_post_invalid_credentials(rest_client):
     resp = rest_client.test_client().post('/auth/login',
-                       data={'email': 'foo@bar.com', 'password': '123'})
+                                          data={'email': 'foo@bar.com', 'password': '123'})
 
     assert resp.status_code == HTTPStatus.INTERNAL_SERVER_ERROR
     assert resp.json['success'] is False
@@ -50,8 +50,8 @@ def test_auth_login_post_invalid_credentials(rest_client):
 
 def test_auth_login_post_webview_invalid_credentials(rest_client):
     resp = rest_client.test_client().post('/auth/login',
-                       data={'webview': True,
-                             'email': 'foo@bar.com', 'password': '123'})
+                                          data={'webview': True, 'email': 'foo@bar.com',
+                                                'password': '123'})
 
     assert resp.status_code == HTTPStatus.OK
     assert resp.json is None
@@ -125,7 +125,7 @@ def test_auth_oauth_post_invalid_params(rest_client):
 
 def test_auth_oauth_post_invalid_params_webview(rest_client):
     resp = rest_client.test_client().post('/auth/oauth', data={'webview': True,
-                                  'redirect_uri': 'hxxxp:/invalid'})
+                                          'redirect_uri': 'hxxxp:/invalid'})
 
     assert resp.status_code == HTTPStatus.OK
     assert b'Login failed' in resp.data

@@ -6,6 +6,7 @@ from ..decorators import console_exists, console_connected
 from ..consolewrap import ConsoleWrap
 from . import routes
 
+
 @routes.route('/device')
 def device_overview():
     addr = request.args.get('addr')
@@ -31,7 +32,7 @@ def device_overview():
 
     # Filter for specific console when ip address query is supplied (if available)
     data = {console.liveid: console.status for console in app.console_cache.values()
-                if (addr and console.status.get('address') == addr) or not addr}
+            if (addr and console.status.get('address') == addr) or not addr}
     return app.success(devices=data)
 
 
@@ -111,7 +112,7 @@ def console_status(console):
                     t['name'] = resp['titles'][0]['name']
                     t['image'] = resp['titles'][0]['displayImage']
                     t['type'] = resp['titles'][0]['type']
-            except:
+            except Exception:
                 pass
     return app.success(console_status=status)
 

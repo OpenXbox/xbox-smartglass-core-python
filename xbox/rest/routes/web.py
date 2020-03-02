@@ -3,6 +3,7 @@ from flask import request, jsonify
 from ..decorators import require_authentication
 from . import routes
 
+
 @routes.route('/web/title/<title_id>')
 @require_authentication
 def download_title_info(client, title_id):
@@ -16,6 +17,7 @@ def download_title_info(client, title_id):
     except Exception as e:
         return app.error('Download of titleinfo failed, error: {0}'.format(e))
 
+
 @routes.route('/web/titlehistory')
 @require_authentication
 def download_title_history(client):
@@ -25,6 +27,7 @@ def download_title_history(client):
         return jsonify(resp)
     except Exception as e:
         return app.error('Download of titlehistory failed, error: {0}'.format(e))
+
 
 @routes.route('/web/pins')
 @require_authentication
