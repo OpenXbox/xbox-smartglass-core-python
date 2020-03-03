@@ -29,7 +29,6 @@ from xbox.sg.enum import ConnectionState
 
 # REST server imports
 from gevent import pywsgi as rest_pywsgi
-from flask.logging import default_handler as flask_default_handler
 from xbox.rest.app import app as flask_app
 
 
@@ -215,9 +214,19 @@ def handle_logging_setup(args):
     levels = [logging.WARNING, logging.INFO, logging.DEBUG, LOG_LEVEL_DEBUG_INCL_PACKETS]
     # Output level capped to number of levels
     log_level = levels[min(len(levels) - 1, args.verbose)]
-    logging.basicConfig(level=log_level)
+    logging.basicConfig(level=log_level, format=LOG_FMT)
     logging.root.info('Set Loglevel: {0}'
                       .format(logging.getLevelName(log_level)))
+
+    if log_level == LOG_LEVEL_DEBUG_INCL_PACKETS:
+        logging.root.info('Removing previous logging StreamHandlers')
+        while len(logging.root.handlers):
+            del logging.root.handlers[0]
+
+        logging.root.info('Using DEBUG_INCL_PACKETS logging')
+        debugext_handler = logging.StreamHandler()
+        debugext_handler.setFormatter(VerboseFormatter(LOG_FMT))
+        logging.root.addHandler(debugext_handler)
 
     if args.logfile:
         logging.root.info('Set Logfile path: {0}'.format(args.logfile))
@@ -225,13 +234,6 @@ def handle_logging_setup(args):
         file_handler.setLevel(log_level)
         file_handler.setFormatter(logging.Formatter(LOG_FMT))
         logging.root.addHandler(file_handler)
-
-    if log_level <= LOG_LEVEL_DEBUG_INCL_PACKETS:
-        logging.root.info('Using DEBUG_INCL_PACKETS logging')
-        fmt = VerboseFormatter(logging.BASIC_FORMAT)
-        debugext_handler = logging.StreamHandler()
-        debugext_handler.setFormatter(fmt)
-        logging.root.addHandler(debugext_handler)
 
 
 def do_authentication(token_filepath, do_refresh):
@@ -362,7 +364,6 @@ def main(command=None):
         """
         REST Server
         """
-        LOGGER.addHandler(flask_default_handler)
 
         if args.port == 0:
             LOGGER.info('No defaults provided, '
