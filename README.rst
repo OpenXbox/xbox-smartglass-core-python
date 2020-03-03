@@ -37,6 +37,7 @@ Features
 * Media player control (seeing content id, content app, playback actions etc.)
 * Stump protocol (Live-TV Streaming / IR control)
 * Title / Auxiliary stream protocol (f.e. Fallout 4 companion app)
+* Trigger GameDVR remotely
 * REST Server
 
 Frameworks used
@@ -50,108 +51,46 @@ Frameworks used
 Install
 -------
 
-Via pip:
-::
+Via pip::
 
     pip install xbox-smartglass-core
 
+See the end of this README for development-targeted instructions.
 
 How to use
 ----------
+There are several command line utilities to check out::
 
-Authenticate first (Authentication provided by xbox-webapi-python):
-::
+    $ xbox-cli
+
+Some functionality, such as GameDVR record, requires authentication
+with your Microsoft Account to validate you have the right to trigger
+such action.
+
+To authenticate / get authentication tokens use::
 
     $ xbox-authenticate
 
     # Alternative: Use the ncurses terminal ui, it has authentication integrated
     $ xbox-tui
 
-There are several command line utilities to check out
-::
-
-    $ xbox-cli
-
 REST Server
 -----------
 
-Start the REST server
-::
+Start the REST server::
 
     $ xbox-rest-server
 
-Incase you run into a problem, check out RestFAQ_
+For more information consult RestFAQ_
 
-REST Server - Authentication
-----------------------------
-
-Authenticate from scratch
-::
-
-    For non-2FA enabled account: http://localhost:5557/auth/login
-    For 2FA: http://localhost:5557/auth/oauth
-
-    # Store tokens on valid authentication
-    http://localhost:5557/auth/store
-
-Load tokens from disk
-::
-
-    http://localhost:5557/auth/load
-    http://localhost:5557/auth/refresh
-
-2FA OAuth - POST
-::
-
-    # Get authorize url
-    GET http://localhost:5557/auth/url
-    Response-Parameters (JSON): authorization_url
-
-    # Submit redirect url
-    POST http://localhost:5557/auth/oauth
-    Request-Parameters: redirect_uri
-
-Regular (non-2FA) login - POST
-::
-
-    POST http://localhost:5557/auth/login
-    Request-Parameters: email, password
-
-REST Server - General usage
----------------------------
-
-To see all API endpoints:
-::
-
-    http://localhost:5557
-
-
-Usual usage:
-::
-
-    # (Optional) Poweron console
-    http://localhost:5557/device/<liveid>/poweron
-    # NOTE: You can specify device by ip: /device/<liveid>/poweron?addr=192.168.0.123
-    # Enumerate devices on network
-    # NOTE: You can enumerate device by specific ip: /device?addr=192.168.0.123
-    http://localhost:5557/device
-    # Connect to console
-    # NOTE: You can connect anonymously: /connect?anonymous=true
-    # .. if console allows it ..
-    http://localhost:5557/device/<liveid>/connect
-
-    # Use other API endpoints ...
 
 Fallout 4 relay service
 -----------------------
 
 To forward the title communication from the Xbox to your local host
-to use third-party Fallout 4 Pip boy applications or extensions:
-
-::
+to use third-party Fallout 4 Pip boy applications or extensions::
 
     xbox-fo4-relay
-
 
 Screenshots
 -----------
@@ -165,15 +104,55 @@ Here you can see the SmartGlass TUI (Text user interface):
 
 .. image:: https://raw.githubusercontent.com/OpenXbox/xbox-smartglass-core-python/master/assets/xbox_tui_logdetail.png
 
-Known issues
-------------
-* Find, report and/or fix them ;)
 
-Contribute
-----------
-* Report bugs/suggest features
-* Add/update docs
-* Enhance managers
+Install for development
+-----------------------
+
+Ready to contribute? Here's how to set up `xbox-smartglass-core-python` for local development.
+
+1. Fork the `xbox-smartglass-core-python` repo on GitHub.
+2. Clone your fork locally::
+
+    $ git clone git@github.com:your_name_here/xbox-smartglass-core-python.git
+
+3. Install your local copy into a virtual environment. This is how you set up your fork for local development::
+
+    $ python -m venv ~/pyvenv/xbox-smartglass
+    $ source ~/pyvenv/xbox-smartglass/bin/activate
+    $ cd xbox-smartglass-core-python
+    $ pip install -e .[dev]
+
+4. Setup git hooks via `pre-commit`. This ensures your code is properly linted and tests are run::
+
+    $ pre-commit install && pre-commit install -t pre-push
+
+4. Create a branch for local development::
+
+    $ git checkout -b name-of-your-bugfix-or-feature
+
+   Now you can make your changes locally.
+
+5. Commit your changes and push your branch to GitHub::
+
+    $ git add .
+    $ git commit -m "Your detailed description of your changes."
+    $ git push origin name-of-your-bugfix-or-feature
+
+6. Submit a pull request through the GitHub website.
+
+Pull Request Guidelines
+-----------------------
+
+Before you submit a pull request, check that it meets these guidelines:
+
+1. The pull request should include tests.
+2. If the pull request adds functionality, the docs should be updated. Put
+   your new functionality into a function with a docstring, and add the
+   feature to the list in README.rst.
+3. The pull request should work for Python 3.6, 3.7 and 3.8. Check
+   https://travis-ci.org/OpenXbox/xbox-smartglass-core-python/pull_requests
+   and make sure that the tests pass for all supported Python versions.
+
 
 Credits
 -------
