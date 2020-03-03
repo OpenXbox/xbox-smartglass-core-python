@@ -27,9 +27,9 @@ $ xbox-rest-server
 ```
 
 Example local network:
- 
+
  __192.168.0.100__ is the IP address of your computer running the server:
- 
+
 ```sh
 $ xbox-rest-server --bind 192.168.0.100 -p 1234
 ```

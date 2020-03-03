@@ -24,7 +24,7 @@ Xbox-Smartglass-Core
 This library provides the core foundation for the smartglass protocol that is used
 with the Xbox One Gaming console
 
-For in-depth information, check out the documentation: (https://openxbox.github.io)
+For in-depth information, check out the documentation: (https://openxbox.org/smartglass-documentation)
 
 **NOTE: Since 29.02.2020 the following modules are integrated into core: stump, auxiliary, rest-server**
 
@@ -105,8 +105,8 @@ Here you can see the SmartGlass TUI (Text user interface):
 .. image:: https://raw.githubusercontent.com/OpenXbox/xbox-smartglass-core-python/master/assets/xbox_tui_logdetail.png
 
 
-Install for development
------------------------
+Development workflow
+--------------------
 
 Ready to contribute? Here's how to set up `xbox-smartglass-core-python` for local development.
 
@@ -122,37 +122,42 @@ Ready to contribute? Here's how to set up `xbox-smartglass-core-python` for loca
     $ cd xbox-smartglass-core-python
     $ pip install -e .[dev]
 
-4. Setup git hooks via `pre-commit`. This ensures your code is properly linted and tests are run::
+4. Setup auto-linting before each commit via pre-commit_::
 
-    $ pre-commit install && pre-commit install -t pre-push
+    $ pre-commit install
 
-4. Create a branch for local development::
+5. Create a branch for local development::
 
     $ git checkout -b name-of-your-bugfix-or-feature
 
-   Now you can make your changes locally.
 
-5. Commit your changes and push your branch to GitHub::
+6. Make your changes.
 
-    $ git add .
+7. Before pushing the changes to git, please verify they actually work::
+
+    $ pre-commit run -a
+    $ pytest
+
+    # For more extensive testing on several frameworks:
+    $ tox
+
+8. Commit your changes and push your branch to GitHub::
+
     $ git commit -m "Your detailed description of your changes."
     $ git push origin name-of-your-bugfix-or-feature
 
-6. Submit a pull request through the GitHub website.
+9. Submit a pull request through the GitHub website.
+
 
 Pull Request Guidelines
 -----------------------
 
 Before you submit a pull request, check that it meets these guidelines:
 
-1. The pull request should include tests.
-2. If the pull request adds functionality, the docs should be updated. Put
-   your new functionality into a function with a docstring, and add the
-   feature to the list in README.rst.
-3. The pull request should work for Python 3.6, 3.7 and 3.8. Check
-   https://travis-ci.org/OpenXbox/xbox-smartglass-core-python/pull_requests
-   and make sure that the tests pass for all supported Python versions.
-
+1. Code includes unit-tests.
+2. Added code is properly named and documented.
+3. On major changes the README is updated.
+4. Run tests / linting locally before pushing to remote.
 
 Credits
 -------
@@ -167,3 +172,4 @@ This package uses parts of Cookiecutter_ and the `audreyr/cookiecutter-pypackage
 .. _joelday: https://github.com/joelday
 .. _SmartGlass.CSharp: https://github.com/OpenXbox/Xbox-Smartglass-csharp
 .. _RestFAQ: https://github.com/OpenXbox/xbox-smartglass-core-python/blob/master/REST_FAQ.md
+.. _pre-commit: https://pre-commit.com
