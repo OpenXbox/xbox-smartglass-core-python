@@ -52,6 +52,7 @@ setup(
     setup_requires=['pytest-runner'],
     tests_require=[
         'pytest',
+        'pytest-console-scripts',
         'flake8',
         'tox'
     ],
@@ -64,7 +65,8 @@ setup(
             'twine',
             'coverage',
             'pytest',
-            'pytest-runner'
+            'pytest-runner',
+            'pytest-console-scripts'
         ]
     },
     test_suite="tests",
