@@ -24,7 +24,8 @@ setup(
         'xbox.stump',
         'xbox.rest',
         'xbox.rest.routes',
-        'xbox.scripts'
+        'xbox.scripts',
+        'xbox.handlers'
     ],
     namespace_packages=['xbox'],
     zip_safe=False,
