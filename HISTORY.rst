@@ -2,6 +2,12 @@
 History
 =======
 
+1.2.0  (2020-03-04)
+-------------------
+* CLI scripts rewritten, supporting log/loglevel args now, main script is called xbox-cli now
+* Add REPL / REPL server functionality
+* Updates to README and REST server documentation
+
 1.1.2  (2020-02-29)
 -------------------
 
