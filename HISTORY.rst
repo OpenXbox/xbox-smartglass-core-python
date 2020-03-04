@@ -2,8 +2,14 @@
 History
 =======
 
+1.2.1  (2020-03-04)
+-------------------
+
+* HOTFIX: Add xbox.handlers to packages in setup.py
+
 1.2.0  (2020-03-04)
 -------------------
+
 * CLI scripts rewritten, supporting log/loglevel args now, main script is called xbox-cli now
 * Add REPL / REPL server functionality
 * Updates to README and REST server documentation
