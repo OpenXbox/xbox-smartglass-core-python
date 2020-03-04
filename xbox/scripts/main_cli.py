@@ -114,8 +114,11 @@ def parse_arguments(args=None):
     """
     Define commands
     """
-    subparsers = parser.add_subparsers(
-        help='Available commands', dest='command', required=True)
+    subparsers = parser.add_subparsers(help='Available commands')
+    # NOTE: Setting dest and required here for py3.6 compat
+    subparsers.dest = 'command'
+    subparsers.required = True
+
     """Discover"""
     subparsers.add_parser(Commands.Discover,
                           help='Discover console',
