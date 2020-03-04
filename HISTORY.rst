@@ -5,6 +5,7 @@ History
 1.2.1  (2020-03-04)
 -------------------
 
+* cli: Python3.6 compatibility change
 * HOTFIX: Add xbox.handlers to packages in setup.py
 
 1.2.0  (2020-03-04)
