@@ -377,6 +377,7 @@ def main(command=None):
             args.bind, args.port
         ))
 
+        flask_app.token_file = args.tokens
         server = rest_pywsgi.WSGIServer((args.bind, args.port), flask_app)
         server.serve_forever()
         sys.exit(ExitCodes.OK)
