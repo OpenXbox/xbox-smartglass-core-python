@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from setuptools import setup
+from setuptools import setup, find_namespace_packages
 
 
 setup(
@@ -16,18 +16,7 @@ setup(
     keywords="xbox one smartglass auxiliary fallout title stump tv streaming livetv rest api",
     url="https://github.com/OpenXbox/xbox-smartglass-core-python",
     python_requires=">=3.6",
-    packages=[
-        'xbox.sg',
-        'xbox.sg.utils',
-        'xbox.sg.packet',
-        'xbox.auxiliary',
-        'xbox.stump',
-        'xbox.rest',
-        'xbox.rest.routes',
-        'xbox.scripts',
-        'xbox.handlers'
-    ],
-    namespace_packages=['xbox'],
+    packages=find_namespace_packages(include=['xbox.*']),
     zip_safe=False,
     include_package_data=True,
     classifiers=[
