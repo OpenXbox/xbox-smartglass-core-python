@@ -572,7 +572,7 @@ class SGDisplay(object):
 
     def view_scrollable_overlay(self, msg, title='Error', width=25, height=75):
         bottom = self.view_stack[-1]
-        walker = urwid.SimpleFocusListWalker([urwid.Text(l) for l in msg.split('\n')])
+        walker = urwid.SimpleFocusListWalker([urwid.Text(line) for line in msg.split('\n')])
         text = urwid.ListBox(walker)
         line = urwid.LineBox(text, title)
         overlay = urwid.Overlay(line, bottom, 'center', ('relative', width), 'middle', ('relative', height))
