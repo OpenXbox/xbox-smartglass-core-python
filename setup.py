@@ -1,8 +1,25 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from setuptools import setup
+from setuptools import setup, find_namespace_packages
 
+requirements = [
+    'xbox-webapi>=1.1.8',
+    'construct==2.10.56',
+    'cryptography==2.8',
+    'gevent==1.5a3',
+    'dpkt',
+    'marshmallow-objects',
+    'Flask'
+]
+
+setup_requirements = [
+    'pytest-runner'
+]
+
+test_requirements = [
+    'pytest>=3'
+]
 
 setup(
     name="xbox-smartglass-core",
@@ -16,18 +33,7 @@ setup(
     keywords="xbox one smartglass auxiliary fallout title stump tv streaming livetv rest api",
     url="https://github.com/OpenXbox/xbox-smartglass-core-python",
     python_requires=">=3.6",
-    packages=[
-        'xbox.sg',
-        'xbox.sg.utils',
-        'xbox.sg.packet',
-        'xbox.auxiliary',
-        'xbox.stump',
-        'xbox.rest',
-        'xbox.rest.routes',
-        'xbox.scripts',
-        'xbox.handlers'
-    ],
-    namespace_packages=['xbox'],
+    packages=find_namespace_packages(include=['xbox.*']),
     zip_safe=False,
     include_package_data=True,
     classifiers=[
@@ -40,36 +46,10 @@ setup(
         "Programming Language :: Python :: 3.7",
         "Programming Language :: Python :: 3.8"
     ],
-    install_requires=[
-        'xbox-webapi>=1.1.8',
-        'construct==2.10.56',
-        'cryptography==2.8',
-        'gevent==1.5a3',
-        'dpkt',
-        'marshmallow-objects',
-        'Flask'
-    ],
-    setup_requires=['pytest-runner'],
-    tests_require=[
-        'pytest',
-        'pytest-console-scripts',
-        'flake8',
-        'tox'
-    ],
-    extras_require={
-        'dev': [
-            'bump2version',
-            'watchdog',
-            'Sphinx',
-            'wheel',
-            'twine',
-            'coverage',
-            'pytest',
-            'pytest-runner',
-            'pytest-console-scripts'
-        ]
-    },
+    install_requires=requirements,
+    setup_requires=setup_requirements,
     test_suite="tests",
+    tests_require=test_requirements,
     entry_points={
         'console_scripts': [
             'xbox-cli=xbox.scripts.main_cli:main',
