@@ -11,7 +11,8 @@ Xbox-Smartglass-Core
     :alt: Documentation Status
 
 .. image:: https://img.shields.io/github/workflow/status/OpenXbox/xbox-smartglass-core-python/build?label=build
-    :target: ttps://github.com/OpenXbox/xbox-smartglass-core-python/actions?query=workflow%3Abuild
+    :target: https://github.com/OpenXbox/xbox-smartglass-core-python/actions?query=workflow%3Abuild
+    :alt: Build status
 
 .. image:: https://img.shields.io/discord/338946086775554048
     :target: https://openxbox.org/discord
