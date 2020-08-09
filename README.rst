@@ -10,12 +10,8 @@ Xbox-Smartglass-Core
     :target: http://xbox-smartglass-core-python.readthedocs.io/en/latest/?badge=latest
     :alt: Documentation Status
 
-.. image:: https://travis-ci.com/OpenXbox/xbox-smartglass-core-python.svg?branch=master
-    :target: https://travis-ci.com/OpenXbox/xbox-smartglass-core-python
-
-.. image:: https://img.shields.io/docker/build/openxbox/xbox-smartglass-core.svg
-    :target: https://hub.docker.com/r/openxbox/xbox-smartglass-core
-    :alt: Docker Build Status
+.. image:: https://img.shields.io/github/workflow/status/OpenXbox/xbox-smartglass-core-python/build?label=build
+    :target: ttps://github.com/OpenXbox/xbox-smartglass-core-python/actions?query=workflow%3Abuild
 
 .. image:: https://img.shields.io/discord/338946086775554048
     :target: https://openxbox.org/discord
