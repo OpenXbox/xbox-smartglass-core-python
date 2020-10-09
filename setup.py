@@ -7,7 +7,7 @@ requirements = [
     'xbox-webapi>=1.1.8',
     'construct==2.10.56',
     'cryptography==2.8',
-    'gevent==1.5a3',
+    'gevent==20.9.0',
     'dpkt',
     'marshmallow-objects',
     'Flask'
