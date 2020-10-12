@@ -36,7 +36,7 @@ setup(
         'dpkt==1.9.4',
         'marshmallow-objects==2.3.0',
         'aioconsole==0.3.0',
-        'quart==0.13.1'
+        'quart==0.6.15'
     ],
     setup_requires=['pytest-runner'],
     tests_require=['pytest', 'pytest-console-scripts', 'pytest-asyncio'],

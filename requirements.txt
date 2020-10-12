@@ -5,7 +5,7 @@ cryptography==3.1.1
 dpkt==1.9.4
 marshmallow-objects==2.3.0
 aioconsole==0.3.0
-quart==0.13.1
+quart==0.6.15
 
 # Dev
 pip==20.2.3
