@@ -6,7 +6,7 @@
 Welcome to Xbox-Smartglass-Core's documentation!
 ================================================
 
-.. include:: ../README.rst
+.. mdinclude:: ../README.rst
 
 .. toctree::
    :maxdepth: 2
