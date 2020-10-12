@@ -6,19 +6,19 @@ from setuptools import setup, find_namespace_packages
 requirements = [
     'xbox-webapi==1.1.8',
     'construct==2.10.56',
-    'cryptography==2.8',
-    'gevent==1.5a3',
-    'dpkt',
-    'marshmallow-objects',
-    'Flask'
+    'cryptography==3.1.1',
+    'gevent==20.9.0',
+    'dpkt==1.9.4',
+    'marshmallow-objects==2.3.0',
+    'Flask==1.1.2'
 ]
 
 setup_requirements = [
-    'pytest-runner'
+    'pytest-runner==5.2'
 ]
 
 test_requirements = [
-    'pytest>=3'
+    'pytest==6.1.1'
 ]
 
 setup(
