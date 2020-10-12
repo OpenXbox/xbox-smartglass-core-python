@@ -1,8 +1,8 @@
-from flask import Blueprint
+from quart import Blueprint
 routes = Blueprint('routes', __name__)
 
-from .index import *  # noqa: F401,E402,F403
-from .auth import *  # noqa: F401,E402,F403
-from .device import *  # noqa: F401,E402,F403
-from .web import *  # noqa: F401,E402,F403
-from .versions import *  # noqa: F401,E402,F403
+from .index import *  # noqa: F401,F403
+from .auth import *  # noqa: F401,F403
+from .device import *  # noqa: F401,F403
+from .web import *  # noqa: F401,F403
+from .versions import *  # noqa: F401,F403

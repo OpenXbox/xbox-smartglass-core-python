@@ -7,12 +7,8 @@ Additional shows console status (active titles, OS version, locale) and media st
 import json
 import urwid
 import logging
+import asyncio
 from binascii import hexlify
-from collections import deque
-
-import gevent
-import gevent.select
-import gevent.signal
 
 from xbox.webapi.scripts.tui import WebAPIDisplay
 
@@ -50,8 +46,8 @@ class ControllerRemote(urwid.Filler):
     def keypress(self, size, key):
         if key in self.keymap:
             button = self.keymap[key]
-            self.console.gamepad_input(button)
-            self.console.gamepad_input(GamePadButton.Clear)
+            asyncio.create_task(self.console.gamepad_input(button))
+            asyncio.create_task(self.console.gamepad_input(GamePadButton.Clear))
         elif key in ('q', 'Q'):
             return key
         else:
@@ -79,10 +75,10 @@ class TextInput(urwid.Filler):
     def keypress(self, size, key):
         if key != 'enter':
             ret = super(TextInput, self).keypress(size, key)
-            self.console.send_systemtext_input(self.original_widget.edit_text)
+            asyncio.create_task(self.console.send_systemtext_input(self.original_widget.edit_text))
             return ret
         else:
-            self.console.finish_text_input()
+            asyncio.create_task(self.console.finish_text_input())
             self.app.return_to_details_menu()
 
 
@@ -222,12 +218,13 @@ class ConsoleButton(urwid.Button):
         self.refresh()
 
     def callback(self, *args):
-        if not self.connect():
-            return
+        asyncio.create_task(self.cb_connect())
 
-        self.app.view_details_menu(self.console)
+    async def cb_connect(self):
+        if await self.connect():
+            self.app.view_details_menu(self.console)
 
-    def connect(self):
+    async def connect(self):
         if self.console.connected:
             return True
 
@@ -235,7 +232,7 @@ class ConsoleButton(urwid.Button):
             self.app.view_msgbox('Console unavailable, try refreshing')
             return False
 
-        state = self.console.connect(
+        state = await self.console.connect(
             userhash=self.app.auth_mgr.userinfo.userhash,
             xsts_token=self.app.auth_mgr.xsts_token.jwt
         )
@@ -246,13 +243,14 @@ class ConsoleButton(urwid.Button):
 
         return True
 
-    def disconnect(self):
+    async def disconnect(self):
         if self.console.connected:
-            self.console.disconnect()
+            await self.console.disconnect()
 
     def refresh(self):
         text = ' {c.name:<20}{c.address:<20}{c.liveid:<20}{ds:<20}'.format(
-            c=self.console, ds='{}, {}'.format(self.console.device_status.name, self.console.connection_state.name)
+            c=self.console,
+            ds=f'{self.console.device_status.name}, {self.console.connection_state.name}'
         )
         self.textwidget.set_text(text)
 
@@ -263,11 +261,11 @@ class ConsoleButton(urwid.Button):
 
     def keypress(self, size, key):
         if key in ('p', 'P'):
-            self.console.power_on()
+            asyncio.create_task(self.console.power_on())
         elif key in ('c', 'C'):
-            self.connect()
+            asyncio.create_task(self.connect())
         elif key in ('d', 'D'):
-            self.disconnect()
+            asyncio.create_task(self.disconnect())
         else:
             return super(ConsoleButton, self).keypress(size, key)
 
@@ -288,11 +286,11 @@ class ConsoleList(urwid.Frame):
         super(ConsoleList, self).__init__(view, header=header, footer=footer)
         self.walker[:] = [ConsoleButton(self.app, c) for c in self.consoles]
 
-    def refresh(self):
-        gevent.spawn(self._refresh)
+    async def refresh(self):
+        await self._refresh()
 
-    def _refresh(self):
-        discovered = Console.discover(blocking=True)
+    async def _refresh(self):
+        discovered = await Console.discover(blocking=True)
 
         liveids = [d.liveid for d in discovered]
         for i, c in enumerate(self.consoles):
@@ -315,7 +313,7 @@ class ConsoleList(urwid.Frame):
 
     def keypress(self, size, key):
         if key in ('r', 'R'):
-            self.refresh()
+            asyncio.create_task(self.refresh())
         else:
             return super(ConsoleList, self).keypress(size, key)
 
@@ -336,18 +334,18 @@ class CommandList(urwid.SimpleFocusListWalker):
         self.app.view_launch_title_textbox(self.__launch_title)
 
     def __launch_title(self, uri):
-        self.console.launch_title(uri)
+        asyncio.create_task(self.console.launch_title(uri))
         self.app.return_to_details_menu()
 
     def _controller_remote(self):
         self.app.view_controller_remote_overlay(self.console)
 
     def _disconnect(self):
-        self.console.disconnect()
+        asyncio.create_task(self.console.disconnect())
         self.app.return_to_main_menu()
 
     def _power_off(self):
-        self.console.power_off()
+        asyncio.create_task(self.console.power_off())
         self.app.return_to_main_menu()
 
 
@@ -485,6 +483,7 @@ class SGDisplay(object):
         self.header = urwid.AttrMap(urwid.Text(self.header_text), 'header')
         footer = urwid.AttrMap(urwid.Text(self.footer_main_text), 'foot')
 
+        self.running = False
         self.loop = None
         self.consoles = ConsoleList(self, consoles, self.header, footer)
         self.auth_mgr = auth_mgr
@@ -572,7 +571,7 @@ class SGDisplay(object):
 
     def view_scrollable_overlay(self, msg, title='Error', width=25, height=75):
         bottom = self.view_stack[-1]
-        walker = urwid.SimpleFocusListWalker([urwid.Text(line) for line in msg.split('\n')])
+        walker = urwid.SimpleFocusListWalker([urwid.Text(l) for l in msg.split('\n')])
         text = urwid.ListBox(walker)
         line = urwid.LineBox(text, title)
         overlay = urwid.Overlay(line, bottom, 'center', ('relative', width), 'middle', ('relative', height))
@@ -593,94 +592,32 @@ class SGDisplay(object):
             self.pop_view(self)
 
     def do_quit(self):
-        raise urwid.ExitMainLoop()
+        self.running = False
+        self.loop.stop()
 
-    def run(self):
+    async def run(self, loop):
+        eventloop = urwid.AsyncioEventLoop(loop=loop)
         self.loop = urwid.MainLoop(
-            urwid.SolidFill('x'),
+            urwid.SolidFill('xq'),
             handle_mouse=False,
             palette=self.palette,
             unhandled_input=self.unhandled_input,
-            event_loop=GeventLoop()
+            event_loop=eventloop
         )
-
         self.loop.set_alarm_in(0.0001, lambda *args: self.view_main_menu())
-        self.consoles.refresh()
-        self.loop.run()
+
+        self.loop.start()
+        self.running = True
+        await self.consoles.refresh()
+
+        while self.running:
+            await asyncio.sleep(1000)
 
     def unhandled_input(self, input):
         if input in ('q', 'Q', 'esc'):
             self.pop_view(self)
         elif input in ('l', 'L'):
             self.view_log()
-
-
-# https://github.com/what-studio/urwid-geventloop
-class GeventLoop(object):
-    def __init__(self):
-        super(GeventLoop, self).__init__()
-        self._completed_greenlets = deque()
-        self._idle_callbacks = []
-        self._idle_event = gevent.event.Event()
-
-    def _greenlet_completed(self, greenlet):
-        self._completed_greenlets.append(greenlet)
-        self._idle_event.set()
-
-    # alarm
-    def alarm(self, seconds, callback):
-        greenlet = gevent.spawn_later(seconds, callback)
-        greenlet.link(self._greenlet_completed)
-        return greenlet
-
-    def remove_alarm(self, handle):
-        if not handle.dead or handle.ready():
-            handle.kill()
-            return True
-        return False
-
-    # file
-    def _watch_file(self, fd, callback):
-        while True:
-            gevent.select.select([fd], [], [])
-            gevent.spawn(callback).link(self._greenlet_completed)
-
-    def watch_file(self, fd, callback):
-        greenlet = gevent.spawn(self._watch_file, fd, callback)
-        greenlet.link(self._greenlet_completed)
-        return greenlet
-
-    def remove_watch_file(self, handle):
-        handle.kill()
-        return True
-
-    # idle
-    def enter_idle(self, callback):
-        self._idle_callbacks.append(callback)
-        return callback
-
-    def remove_enter_idle(self, handle):
-        try:
-            self._idle_callbacks.remove(handle)
-        except KeyError:
-            return False
-        return True
-
-    # signal
-    def set_signal_handler(self, signum, handler):
-        gevent.signal.signal(signum, handler)
-
-    def run(self):
-        try:
-            while True:
-                for callback in self._idle_callbacks:
-                    callback()
-                while len(self._completed_greenlets) > 0:
-                    self._completed_greenlets.popleft().get(block=False)
-                if self._idle_event.wait(timeout=1):
-                    self._idle_event.clear()
-        except urwid.ExitMainLoop:
-            pass
 
 
 def load_consoles(filepath):
@@ -698,11 +635,12 @@ def save_consoles(filepath, consoles):
         json.dump(consoles, fh, indent=2)
 
 
-def run_tui(consoles_filepath, addr, liveid, tokens_filepath, do_refresh):
+async def run_tui(loop, consoles_filepath, addr, liveid, tokens_filepath, do_refresh):
     """
     Main entrypoint for TUI
 
     Args:
+        loop (AbstractEventLoop): Eventloop
         consoles_filepath (str): Console json filepath
         addr (str): IP address of console
         liveid (str): LiveID to connect to
@@ -724,7 +662,7 @@ def run_tui(consoles_filepath, addr, liveid, tokens_filepath, do_refresh):
         return ExitCodes.AuthenticationError
 
     app = SGDisplay(consoles, app.auth_mgr)
-    app.run()
+    await app.run(loop)
 
     if consoles_filepath:
         save_consoles(consoles_filepath, app.consoles.consoles)

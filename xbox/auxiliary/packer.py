@@ -1,3 +1,6 @@
+from typing import List
+
+from xbox.auxiliary.crypto import AuxiliaryStreamCrypto
 from xbox.sg.crypto import PKCS7Padding
 from xbox.auxiliary.packet import aux_header_struct, AUX_PACKET_MAGIC
 
@@ -6,14 +9,18 @@ class AuxiliaryPackerException(Exception):
     pass
 
 
-def pack(data, crypto, server_data=False):
+def pack(
+    data: bytes,
+    crypto: AuxiliaryStreamCrypto,
+    server_data: bool = False
+) -> List[bytes]:
     """
     Encrypt auxiliary data blob
 
     Args:
-        data (bytes): Data
-        crypto (:class:`AuxiliaryStreamCrypto`): Crypto context
-        server_data (bool): Whether to encrypt with `server IV`
+        data: Data
+        crypto: Crypto context
+        server_data: Whether to encrypt with `server IV`
 
     Returns:
         bytes: Encrypted message
@@ -48,14 +55,18 @@ def pack(data, crypto, server_data=False):
     return messages
 
 
-def unpack(data, crypto, client_data=False):
+def unpack(
+    data: bytes,
+    crypto: AuxiliaryStreamCrypto,
+    client_data: bool = False
+) -> bytes:
     """
     Split and decrypt auxiliary data blob
 
     Args:
-        data (bytes): Data blob
-        crypto (:class:`AuxiliaryStreamCrypto`): Crypto context
-        client_data (bool): Whether to decrypt with 'client IV'
+        data: Data blob
+        crypto: Crypto context
+        client_data: Whether to decrypt with 'client IV'
 
     Returns:
         bytes: Decrypted message

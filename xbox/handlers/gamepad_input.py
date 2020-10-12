@@ -6,8 +6,6 @@ Send controller input via stdin (terminal) to the console
 import sys
 import logging
 
-import gevent.socket
-
 from xbox.sg.enum import GamePadButton
 
 LOGGER = logging.getLogger(__name__)
@@ -62,7 +60,6 @@ def get_getch_func():
             old_settings = termios.tcgetattr(fd)
             try:
                 tty.setraw(fd)
-                gevent.socket.wait_read(fd)
                 ch = sys.stdin.read(1)
             finally:
                 termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)

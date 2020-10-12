@@ -3,24 +3,6 @@
 
 from setuptools import setup, find_namespace_packages
 
-requirements = [
-    'xbox-webapi>=1.1.8',
-    'construct==2.10.56',
-    'cryptography==2.8',
-    'gevent==1.5a3',
-    'dpkt',
-    'marshmallow-objects',
-    'Flask'
-]
-
-setup_requirements = [
-    'pytest-runner'
-]
-
-test_requirements = [
-    'pytest>=3'
-]
-
 setup(
     name="xbox-smartglass-core",
     version="1.2.2",
@@ -39,17 +21,43 @@ setup(
     classifiers=[
         "Development Status :: 4 - Beta",
         "Intended Audience :: Developers",
-        "License :: OSI Approved :: MIT license",
+        "License :: OSI Approved :: MIT License",
         "Topic :: Software Development :: Libraries :: Python Modules",
         "Programming Language :: Python :: 3",
         "Programming Language :: Python :: 3.6",
         "Programming Language :: Python :: 3.7",
         "Programming Language :: Python :: 3.8"
     ],
-    install_requires=requirements,
-    setup_requires=setup_requirements,
     test_suite="tests",
-    tests_require=test_requirements,
+    install_requires=[
+        'xbox-webapi==1.1.8',
+        'construct==2.10.56',
+        'cryptography==3.1.1',
+        'dpkt==1.9.4',
+        'marshmallow-objects==2.3.0',
+        'aioconsole==0.3.0',
+        'quart==0.13.1'
+    ],
+    setup_requires=['pytest-runner'],
+    tests_require=['pytest', 'pytest-console-scripts', 'pytest-asyncio'],
+    extras_require={
+        "dev": [
+            "pip",
+            "bump2version",
+            "wheel",
+            "watchdog",
+            "flake8",
+            "coverage",
+            "Sphinx",
+            "sphinx_rtd_theme",
+            "recommonmark",
+            "twine",
+            "pytest",
+            "pytest-asyncio",
+            "pytest-console-scripts",
+            "pytest-runner",
+        ],
+    },
     entry_points={
         'console_scripts': [
             'xbox-cli=xbox.scripts.main_cli:main',
@@ -64,7 +72,7 @@ setup(
             'xbox-fo4-relay=xbox.scripts.main_cli:main_falloutrelay',
             'xbox-pcap=xbox.scripts.pcap:main',
             'xbox-recrypt=xbox.scripts.recrypt:main',
-            'xbox-rest-server=xbox.scripts.rest_server:main'
+            'xbox-rest-server=xbox.scripts.main_cli:main_rest'
         ]
     }
 )

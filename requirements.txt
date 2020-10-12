@@ -1,0 +1,24 @@
+# Run
+xbox-webapi==1.1.8
+construct==2.10.56
+cryptography==3.1.1
+dpkt==1.9.4
+marshmallow-objects==2.3.0
+aioconsole==0.3.0
+quart==0.13.1
+
+# Dev
+pip==20.2.3
+setuptools==50.3.0
+bump2version==1.0.1
+wheel==0.35.1
+watchdog==0.10.3
+flake8==3.8.4
+coverage==5.3
+Sphinx==3.2.1
+twine==3.2.0
+
+pytest==6.1.1
+pytest-runner==5.2
+pytest-asyncio==0.14.0
+pytest-console-scripts==1.0.0

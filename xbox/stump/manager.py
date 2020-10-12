@@ -31,8 +31,7 @@ class StumpManager(Manager):
         Title Manager (ServiceChannel.SystemInputTVRemote)
 
         Args:
-             console (:class:`.Console`): Console object, internally passed
-                                          by `Console.add_manager`
+             console: Console object
         """
         super(StumpManager, self).__init__(
             console, ServiceChannel.SystemInputTVRemote

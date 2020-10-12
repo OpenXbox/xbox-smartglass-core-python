@@ -1,13 +1,13 @@
-from flask import Flask, jsonify
+from quart import Quart, jsonify
 from http import HTTPStatus
 from xbox.webapi.authentication.manager import AuthenticationManager
 from xbox.webapi.api.client import XboxLiveClient
 from .routes import routes
 
 
-class SmartGlassFlaskApp(Flask):
+class SmartGlassQuartApp(Quart):
     def __init__(self, name):
-        super(SmartGlassFlaskApp, self).__init__(name)
+        super(SmartGlassQuartApp, self).__init__(name)
 
         self.console_cache = {}
         self.title_cache = {}
@@ -58,5 +58,5 @@ class SmartGlassFlaskApp(Flask):
         return jsonify(ret)
 
 
-app = SmartGlassFlaskApp(__name__)
+app = SmartGlassQuartApp(__name__)
 app.register_blueprint(routes)

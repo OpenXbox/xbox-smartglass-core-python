@@ -71,7 +71,7 @@ def parse(pcap_filepath, crypto):
                 if is_client:
                     print('{0: <{1}}'.format(i, col_width), '│')
                 else:
-                    print(' ' * col_width, '│', '{0}'.format(i))
+                    print(' ' * col_width, '│', '{0}'.format(i, col_width))
 
 
 def main():

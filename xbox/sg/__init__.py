@@ -4,4 +4,4 @@ Version and author information.
 """
 
 __author__ = """OpenXbox"""
-__version__ = '1.2.2'
+__version__ = '0.8.10'

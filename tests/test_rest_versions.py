@@ -1,11 +1,14 @@
+import pytest
 from http import HTTPStatus
 
 
-def test_versions(rest_client):
-    resp = rest_client.test_client().get('/versions')
+@pytest.mark.asyncio
+async def test_versions(rest_client):
+    resp = await rest_client.test_client().get('/versions')
+    resp_json = await resp.json
 
     assert resp.status_code == HTTPStatus.OK
-    assert resp.json['success'] is True
+    assert resp_json['success'] is True
 
-    assert 'versions' in resp.json
-    assert len(resp.json['versions']) > 1
+    assert 'versions' in resp_json
+    assert len(resp_json['versions']) > 1

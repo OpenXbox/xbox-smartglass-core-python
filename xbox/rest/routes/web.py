@@ -1,5 +1,5 @@
-from flask import current_app as app
-from flask import request, jsonify
+from quart import current_app as app
+from quart import request, jsonify
 from ..decorators import require_authentication
 from . import routes
 

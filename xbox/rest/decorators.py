@@ -1,4 +1,4 @@
-from flask import current_app as app
+from quart import current_app as app
 from http import HTTPStatus
 from functools import wraps
 

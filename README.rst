@@ -41,9 +41,8 @@ Frameworks used
 ---------------
 * construct - Binary parsing (https://construct.readthedocs.io/)
 * cryptography - cryptography magic (https://cryptography.io/en/stable/)
-* gevent - coroutines (http://www.gevent.org/)
 * dpkt - pcap parsing (https://dpkt.readthedocs.io/en/latest/)
-* Flask - REST API (https://pypi.org/project/Flask/)
+* Quart - REST API (https://pypi.org/project/quart/)
 
 Install
 -------

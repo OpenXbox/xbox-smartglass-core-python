@@ -1,13 +1,13 @@
 """
-Wrapper around gevent's greenlets
+Wrapper around asyncio's tasks
 """
-import gevent
+import asyncio
 
 
 class Event(object):
-    def __init__(self, green=False):
+    def __init__(self, asynchronous: bool = False):
         self.handlers = []
-        self.green = green
+        self.asynchronous = asynchronous
 
     def add(self, handler):
         if not callable(handler):
@@ -28,7 +28,7 @@ class Event(object):
 
     def __call__(self, *args, **kwargs):
         for handler in self.handlers:
-            if self.green:
-                gevent.spawn(handler, *args, **kwargs)
+            if self.asynchronous:
+                asyncio.create_task(handler(*args, **kwargs))
             else:
                 handler(*args, **kwargs)

@@ -4,21 +4,25 @@ Managers for handling different ServiceChannels.
 If a manager for a specific :class:`ServiceChannel` is attached,
 incoming messages get forwarded there, otherways they are discarded.
 
-Managers can be attached by calling `add_manager()` on the :class:`Console` object (see example)
-Methods of manager are available through console-context
+Managers can be attached by calling `add_manager()` on the :class:`Console`
+object (see example)
+Methods of manager are available through console-context.
 
 Example:
     How to add a manager::
 
-        discovered = Console.discover(timeout=1)
+        discovered = await Console.discover(timeout=1)
         if len(discovered):
             console = discovered[0]
 
             # Add manager, optionally passing initialization parameter
             some_arg_for_manager_init = 'example'
-            console.add_manager(MediaManager, additional_arg=some_arg_for_manager_init)
+            console.add_manager(
+                MediaManager,
+                additional_arg=some_arg_for_manager_init
+            )
 
-            console.connect()
+            await console.connect()
             if console.connection_state != ConnectionState.Connected:
                 print("Connection failed")
                 sys.exit(1)
@@ -27,19 +31,22 @@ Example:
             # Call manager method
             console.media_command(0x54321, MediaControlCommand.PlayPauseToggle, 0)
 
-            try:
-                console.protocol.serve_forever()
-            except KeyboardInterrupt:
-                pass
         else:
             print("No consoles discovered")
             sys.exit(1)
 """
 import time
 import logging
+from typing import Optional
+
+from construct import Container
+
 from xbox.sg import factory
-from xbox.sg.enum import MessageType, ServiceChannel, AckStatus, TextResult
+from xbox.sg.enum import MessageType, ServiceChannel, AckStatus, TextResult, \
+    SoundLevel, MediaControlCommand, MediaPlaybackStatus, TextInputScope, \
+    MediaType, GamePadButton
 from xbox.sg.utils.events import Event
+from xbox.sg.utils.struct import XStruct
 
 log = logging.getLogger(__name__)
 
@@ -47,19 +54,18 @@ log = logging.getLogger(__name__)
 class Manager(object):
     __namespace__ = ''
 
-    def __init__(self, console, channel):
+    def __init__(self, console, channel: ServiceChannel):
         """
         Don't use directly!
         INTERNALLY called by the parent :class:`Console`!
 
         Args:
-            console (:class:`Console`): Console object, internally passed
-                by `Console.add_manager`
-            channel (:class:`ServiceChannel`): Service channel
+            console: Console object, internally passed by `Console.add_manager
+            channel: Service channel
         """
         self.console = console
-        self.console.protocol.on_message += self._pre_on_message
-        self.console.protocol.on_json += self._pre_on_json
+        self.console.on_message += self._pre_on_message
+        self.console.on_json += self._pre_on_json
         self._channel = channel
 
     def _pre_on_message(self, msg, channel):
@@ -82,23 +88,23 @@ class Manager(object):
         """
         pass
 
-    def _send_message(self, msg):
+    async def _send_message(self, msg: XStruct):
         """
         Internal method to send messages to initialized Service Channel
 
         Args:
             msg (:class:`XStructObj`): Message
         """
-        return self.console.protocol.send_message(msg, channel=self._channel)
+        return await self.console.send_message(msg, channel=self._channel)
 
-    def _send_json(self, data):
+    async def _send_json(self, data: str) -> None:
         """
         Internal method to send JSON messages to initialized Service Channel
 
         Args:
-            data (dict): JSON message
+            data: JSON message
         """
-        return self.console.protocol.json(data, channel=self._channel)
+        return await self.console.json(data, channel=self._channel)
 
 
 class InputManagerError(Exception):
@@ -116,35 +122,42 @@ class InputManager(Manager):
         Input Manager (ServiceChannel.SystemInput)
 
         Args:
-             console (:class:`.Console`): Console object, internally passed
-                                          by `Console.add_manager`
+             console: Console object, internally passed by `Console.add_manager
 
         """
         super(InputManager, self).__init__(console, ServiceChannel.SystemInput)
 
-    def _on_message(self, msg, channel):
+    def _on_message(self, msg: XStruct, channel: ServiceChannel) -> None:
         """
         Internal handler method to receive messages from SystemInput Channel
 
         Args:
-            msg (:class:`XStructObj`): Message
-            channel (:class:`ServiceChannel`): Service channel
+            msg: Message
+            channel: Service channel
         """
         raise InputManagerError("Unexpected message received on InputManager")
 
-    def gamepad_input(self, buttons, l_trigger=0, r_trigger=0, l_thumb_x=0,
-                      l_thumb_y=0, r_thumb_x=0, r_thumb_y=0):
+    async def gamepad_input(
+        self,
+        buttons: GamePadButton,
+        l_trigger: int = 0,
+        r_trigger: int = 0,
+        l_thumb_x: int = 0,
+        l_thumb_y: int = 0,
+        r_thumb_x: int = 0,
+        r_thumb_y: int = 0
+    ) -> None:
         """
         Send gamepad input
 
         Args:
-            buttons (:class:`GamePadButton`): Gamepad buttons bits
-            l_trigger (int): Left trigger value
-            r_trigger (int): Right trigger value
-            l_thumb_x (int): Left thumbstick X-axis value
-            l_thumb_y (int): Left thumbstick Y-axis value
-            r_thumb_x (int): Right thumbstick X-axis value
-            r_thumb_y (int): Right thumbstick Y-axis value
+            buttons: Gamepad buttons bits
+            l_trigger: Left trigger value
+            r_trigger: Right trigger value
+            l_thumb_x: Left thumbstick X-axis value
+            l_thumb_y: Left thumbstick Y-axis value
+            r_thumb_x: Right thumbstick X-axis value
+            r_thumb_y: Right thumbstick Y-axis value
 
         Returns: None
         """
@@ -153,7 +166,7 @@ class InputManager(Manager):
             ts, buttons, l_trigger, r_trigger, l_thumb_x, l_thumb_y,
             r_thumb_x, r_thumb_y
         )
-        return self._send_message(msg)
+        return await self._send_message(msg)
 
 
 class MediaManagerError(Exception):
@@ -170,9 +183,7 @@ class MediaManager(Manager):
         """
         Media Manager (ServiceChannel.SystemMedia)
 
-        Args:
-             console (:class:`.Console`): Console object, internally passed
-                                          by `Console.add_manager`
+        Args: Console object, internally passed by `Console.add_manager
 
         """
         super(MediaManager, self).__init__(console, ServiceChannel.SystemMedia)
@@ -181,13 +192,13 @@ class MediaManager(Manager):
         self.on_media_command_result = Event()
         self.on_media_controller_removed = Event()
 
-    def _on_message(self, msg, channel):
+    def _on_message(self, msg: XStruct, channel: ServiceChannel) -> None:
         """
         Internal handler method to receive messages from SystemMedia Channel
 
         Args:
-            msg (:class:`XStructObj`): Message
-            channel (:class:`ServiceChannel`): Service channel
+            msg: Message
+            channel: Service channel
         """
         msg_type = msg.header.flags.msg_type
         payload = msg.protected_payload
@@ -209,199 +220,190 @@ class MediaManager(Manager):
             self.on_media_controller_removed(payload)
 
         else:
-            raise MediaManagerError("Unexpected message received on MediaManager")
+            raise MediaManagerError(
+                "Unexpected message received on MediaManager"
+            )
 
     @property
-    def media_state(self):
+    def media_state(self) -> Optional[Container]:
         """
         Media state payload
 
-        Returns:
-            :class:`Container`: Media state payload
+        Returns: Media state payload
         """
         return self._media_state
 
     @property
-    def active_media(self):
+    def active_media(self) -> Optional[bool]:
         """
         Check whether console has active media
 
-        Returns:
-            bool: `True` if media is active, `False` if not
+        Returns: `True` if media is active, `False` if not
         """
         return self.media_state is not None
 
     @property
-    def title_id(self):
+    def title_id(self) -> Optional[int]:
         """
         Title Id of active media
 
-        Returns:
-            int: Title Id
+        Returns: Title Id
         """
         if self.media_state:
             return self.media_state.title_id
 
     @property
-    def aum_id(self):
+    def aum_id(self) -> Optional[str]:
         """
         Application user model Id of active media
 
-        Returns:
-            str: Aum Id
+        Returns: Aum Id
         """
         if self.media_state:
             return self.media_state.aum_id
 
     @property
-    def asset_id(self):
+    def asset_id(self) -> Optional[str]:
         """
         Asset Id of active media
 
-        Returns:
-            str: Asset Id
+        Returns: Asset Id
         """
         if self.media_state:
             return self.media_state.asset_id
 
     @property
-    def media_type(self):
+    def media_type(self) -> Optional[MediaType]:
         """
         Media type of active media
 
-        Returns:
-            :class:`MediaType`: Media type
+        Returns: Media type
         """
         if self.media_state:
             return self.media_state.media_type
 
     @property
-    def sound_level(self):
+    def sound_level(self) -> Optional[SoundLevel]:
         """
         Sound level of active media
 
-        Returns:
-            :class:`SoundLevel`: Sound level
+        Returns: Sound level
         """
         if self.media_state:
             return self.media_state.sound_level
 
     @property
-    def enabled_commands(self):
+    def enabled_commands(self) -> Optional[MediaControlCommand]:
         """
         Enabled MediaCommands bitmask
 
-        Returns:
-            :class:`MediaControlCommand`: Bitmask of enabled commands
+        Returns: Bitmask of enabled commands
         """
         if self.media_state:
             return self.media_state.enabled_commands
 
     @property
-    def playback_status(self):
+    def playback_status(self) -> Optional[MediaPlaybackStatus]:
         """
-        Title Id of active media
+        Playback status of active media
 
-        Returns:
-            :class:`MediaPlaybackStatus`: Playback status
+        Returns: Playback status
         """
         if self.media_state:
             return self.media_state.playback_status
 
     @property
-    def rate(self):
+    def rate(self) -> Optional[float]:
         """
         Playback rate of active media
 
-        Returns:
-            float: Playback rate
+        Returns: Playback rate
         """
         if self.media_state:
             return self.media_state.rate
 
     @property
-    def position(self):
+    def position(self) -> Optional[int]:
         """
         Playback position of active media
 
-        Returns:
-            int: Playback position in microseconds
+        Returns: Playback position in microseconds
         """
         if self.media_state:
             return self.media_state.position
 
     @property
-    def media_start(self):
+    def media_start(self) -> Optional[int]:
         """
         Media start position of active media
 
-        Returns:
-            int: Media start position in microseconds
+        Returns: Media start position in microseconds
         """
         if self.media_state:
             return self.media_state.media_start
 
     @property
-    def media_end(self):
+    def media_end(self) -> Optional[int]:
         """
         Media end position of active media
 
-        Returns:
-            int: Media end position in microseconds
+        Returns: Media end position in microseconds
         """
         if self.media_state:
             return self.media_state.media_end
 
     @property
-    def min_seek(self):
+    def min_seek(self) -> Optional[int]:
         """
         Minimum seek position of active media
 
-        Returns:
-            int: Minimum position in microseconds
+        Returns: Minimum position in microseconds
         """
         if self.media_state:
             return self.media_state.min_seek
 
     @property
-    def max_seek(self):
+    def max_seek(self) -> Optional[int]:
         """
         Maximum seek position of active media
 
-        Returns:
-            int: Maximum position in microseconds
+        Returns: Maximum position in microseconds
         """
         if self.media_state:
             return self.media_state.max_seek
 
     @property
-    def metadata(self):
+    def metadata(self) -> Container:
         """
         Media metadata of active media
 
-        Returns:
-            :class:`Container`: Media metadata
+        Returns: Media metadata
         """
         if self.media_state:
             return self.media_state.metadata
 
-    def media_command(self, title_id, command, request_id=0,
-                      seek_position=None):
+    async def media_command(
+        self,
+        title_id: int,
+        command: MediaControlCommand,
+        request_id: int = 0,
+        seek_position: Optional[int] = None
+    ) -> None:
         """
         Send media command
 
         Args:
-            title_id (int): Title Id
-            command (:class:`MediaControlCommand`): Media Command
-            request_id (int): Incrementing Request Id
-            seek_position (int): (optional) Seek position
+            title_id: Title Id
+            command: Media Command
+            request_id: Incrementing Request Id
+            seek_position: Seek position
 
         Returns: None
         """
         msg = factory.media_command(
             request_id, title_id, command, seek_position
         )
-        return self._send_message(msg)
+        return await self._send_message(msg)
 
 
 class TextManagerError(Exception):
@@ -419,8 +421,7 @@ class TextManager(Manager):
         Text Manager (ServiceChannel.SystemText)
 
         Args:
-             console (:class:`.Console`): Console object, internally passed
-                                          by `Console.add_manager`
+             console: Console object, internally passed by `Console.add_manager
 
         """
         super(TextManager, self).__init__(console, ServiceChannel.SystemText)
@@ -434,7 +435,7 @@ class TextManager(Manager):
         self.on_systemtext_input = Event()
         self.on_systemtext_done = Event()
 
-    def _on_message(self, msg, channel):
+    def _on_message(self, msg: XStruct, channel: ServiceChannel):
         """
         Internal handler method to receive messages from SystemText Channel
 
@@ -532,88 +533,82 @@ class TextManager(Manager):
             return self.session_config.text_options
 
     @property
-    def text_input_scope(self):
+    def text_input_scope(self) -> Optional[TextInputScope]:
         """
         Current Text input scope
 
-        Returns:
-            :class:`TextInputScope`: Text input scope if existing, `None` otherwise
+        Returns: Text input scope if existing, `None` otherwise
         """
         if self.session_config:
             return self.session_config.input_scope
 
     @property
-    def max_text_length(self):
+    def max_text_length(self) -> Optional[int]:
         """
         Maximum Text length
 
-        Returns:
-            int: Max text length if existing, `None` otherwise
+        Returns: Max text length if existing, `None` otherwise
         """
         if self.session_config:
             return self.session_config.max_text_length
 
     @property
-    def text_locale(self):
+    def text_locale(self) -> Optional[str]:
         """
         Test
 
-        Returns:
-            str: Text locale if existing, `None` otherwise
+        Returns: Text locale if existing, `None` otherwise
         """
         if self.session_config:
             return self.session_config.locale
 
     @property
-    def text_prompt(self):
+    def text_prompt(self) -> Optional[str]:
         """
         Test
 
-        Returns:
-            str: Text prompt if existing, `None` otherwise
+        Returns: Text prompt if existing, `None` otherwise
         """
         if self.session_config:
             return self.session_config.prompt
 
-    def reset_session(self):
+    def reset_session(self) -> None:
         """
         Delete cached text-session config, -input and -ack messages
 
-        Returns:
-            None
+        Returns: None
         """
         self.session_config = None
         self.current_session_input = None
         self.last_session_ack = None
         self.current_text_version = 0
 
-    def finish_text_input(self):
+    async def finish_text_input(self) -> None:
         """
         Finishes current text session.
 
         Returns:
             None
         """
-        self.send_systemtext_done(
+        await self.send_systemtext_done(
             session_id=self.text_session_id,
             version=self.current_session_input.submitted_version,
             flags=0,
             result=TextResult.Accept
         )
 
-    def send_systemtext_input(self, text):
+    async def send_systemtext_input(self, text: str) -> Optional[AckStatus]:
         """
         Sends text input
 
         Args:
-            text (str): Text string to send
+            text: Text string to send
 
         Raises:
-            TextManagerError: If message was not
-            acknowledged via AckMsg or SystemTextAck
+            TextManagerError: If message was not acknowledged via
+                              AckMsg or SystemTextAck
 
-        Returns:
-            int: Member of :class:`AckStatus`
+        Returns: Ack status
         """
         new_version = self.current_text_version + 1
         msg = factory.systemtext_input(
@@ -629,7 +624,7 @@ class TextManager(Manager):
             delta=None
         )
 
-        ack_status = self._send_message(msg)
+        ack_status = await self._send_message(msg)
         if ack_status != AckStatus.Processed:
             raise TextManagerError('InputMsg was not acknowledged: %s' % msg)
 
@@ -637,21 +632,30 @@ class TextManager(Manager):
         self.current_session_input = msg.protected_payload
         return ack_status
 
-    def send_systemtext_ack(self, session_id, version):
+    async def send_systemtext_ack(
+        self,
+        session_id: int,
+        version: int
+    ) -> Optional[AckStatus]:
         """
         Acknowledges a SystemText message sent from the console
 
         Args:
-            session_id (int): Current text session id
-            version (int): Text version to ack
+            session_id: Current text session id
+            version: Text version to ack
 
-        Returns:
-            int: Member of :class:`AckStatus`
+        Returns: Ack status
         """
         msg = factory.systemtext_ack(session_id, version)
-        return self._send_message(msg)
+        return await self._send_message(msg)
 
-    def send_systemtext_done(self, session_id, version, flags, result):
+    async def send_systemtext_done(
+        self,
+        session_id: int,
+        version: int,
+        flags: int,
+        result: TextResult
+    ) -> Optional[AckStatus]:
         """
         Informs the console that a text session is done.
 
@@ -659,16 +663,15 @@ class TextManager(Manager):
         accepted or cancelled.
 
         Args:
-            session_id (int): Current text session id
-            version (id): Last acknowledged text version
-            flags (int): Flags
-            result (:class:`TextResult`): Member to :class:`TextResult`
+            session_id: Current text session id
+            version: Last acknowledged text version
+            flags: Flags
+            result: Text result to send
 
-        Returns:
-            int: Member of :class:`AckStatus`
+        Returns: Ack status
         """
         msg = factory.systemtext_done(session_id, version, flags, result)
-        ack_status = self._send_message(msg)
+        ack_status = await self._send_message(msg)
         if ack_status != AckStatus.Processed:
             raise TextManagerError('DoneMsg was not acknowledged: %s' % msg)
 

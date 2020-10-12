@@ -1,5 +1,5 @@
-from flask import current_app as app
-from flask import request, render_template
+from quart import current_app as app
+from quart import request, render_template
 from http import HTTPStatus
 from xbox.webapi.authentication.manager import AuthenticationManager,\
     AuthenticationException, TwoFactorAuthRequired
@@ -24,23 +24,24 @@ def authentication_overview():
 
 
 @routes.route('/auth/login')
-def authentication_login():
+async def authentication_login():
     if app.authentication_mgr.authenticated:
-        return render_template('auth_result.html',
+        return await render_template('auth_result.html',
                                title='Already signed in',
                                result='Already signed in',
                                message='You are already signed in, please logout first!',
                                link_path='/auth/logout',
                                link_title='Logout')
     else:
-        return render_template('login.html')
+        return await render_template('login.html')
 
 
 @routes.route('/auth/login', methods=['POST'])
-def authentication_login_post():
-    is_webview = request.form.get('webview')
-    email_address = request.form.get('email')
-    password = request.form.get('password')
+async def authentication_login_post():
+    request_form = await request.form
+    is_webview = request_form.get('webview')
+    email_address = request_form.get('email')
+    password = request_form.get('password')
 
     if app.authentication_mgr.authenticated:
         return app.error('An account is already signed in.. please logout first', HTTPStatus.BAD_REQUEST)
@@ -55,7 +56,7 @@ def authentication_login_post():
         app.authentication_mgr.dump(app.token_file)
     except AuthenticationException as e:
         if is_webview:
-            return render_template('auth_result.html',
+            return await render_template('auth_result.html',
                                    title='Login fail',
                                    result='Login failed',
                                    message='Error: {0}!'.format(str(e)),
@@ -67,7 +68,7 @@ def authentication_login_post():
 
     except TwoFactorAuthRequired:
         if is_webview:
-            return render_template('auth_result.html',
+            return await render_template('auth_result.html',
                                    title='Login fail',
                                    result='Login failed, 2FA required',
                                    message='Please click the following link to authenticate via OAUTH',
@@ -82,7 +83,7 @@ def authentication_login_post():
                          two_factor_required=False)
 
     if is_webview:
-        return render_template('auth_result.html',
+        return await render_template('auth_result.html',
                                title='Login success',
                                result='Login succeeded',
                                message='Welcome {}!'.format(app.logged_in_gamertag),
@@ -93,11 +94,11 @@ def authentication_login_post():
 
 
 @routes.route('/auth/logout')
-def authentication_logout():
+async def authentication_logout():
     if app.authentication_mgr.authenticated:
-        return render_template('logout.html', username=app.logged_in_gamertag)
+        return await render_template('logout.html', username=app.logged_in_gamertag)
     else:
-        return render_template('auth_result.html',
+        return await render_template('auth_result.html',
                                title='Logout failed',
                                result='Logout failed',
                                message='You are currently not logged in',
@@ -106,12 +107,13 @@ def authentication_logout():
 
 
 @routes.route('/auth/logout', methods=['POST'])
-def authentication_logout_post():
-    is_webview = request.form.get('webview')
+async def authentication_logout_post():
+    request_form = await request.form
+    is_webview = request_form.get('webview')
     username = app.logged_in_gamertag
     app.reset_authentication()
     if is_webview:
-        return render_template('auth_result.html',
+        return await render_template('auth_result.html',
                                title='Logout success',
                                result='Logout succeeded',
                                message='Goodbye {0}!'.format(username),
@@ -120,31 +122,31 @@ def authentication_logout_post():
     else:
         return app.success(message='Logout succeeded')
 
-
 @routes.route('/auth/url')
 def authentication_get_auth_url():
     return app.success(authorization_url=AuthenticationManager.generate_authorization_url())
 
 
 @routes.route('/auth/oauth')
-def authentication_oauth():
+async def authentication_oauth():
     if app.authentication_mgr.authenticated:
-        return render_template('auth_result.html',
+        return await render_template('auth_result.html',
                                title='Already signed in',
                                result='Already signed in',
                                message='You are already signed in, please logout first!',
                                link_path='/auth/logout',
                                link_title='Logout')
     else:
-        return render_template('login_oauth.html',
+        return await render_template('login_oauth.html',
                                oauth_url=AuthenticationManager.generate_authorization_url())
 
 
 @routes.route('/auth/oauth', methods=['POST'])
-def authentication_oauth_post():
-    is_webview = request.form.get('webview')
+async def authentication_oauth_post():
+    request_form = await request.form
+    is_webview = request_form.get('webview')
     app.reset_authentication()
-    redirect_uri = request.form.get('redirect_uri')
+    redirect_uri = request_form.get('redirect_uri')
     if not redirect_uri:
         return app.error('Please provide redirect_url', HTTPStatus.BAD_REQUEST)
 
@@ -156,7 +158,7 @@ def authentication_oauth_post():
         app.authentication_mgr.dump(app.token_file)
     except Exception as e:
         if is_webview:
-            return render_template('auth_result.html',
+            return await render_template('auth_result.html',
                                    title='Login fail',
                                    result='Login failed',
                                    message='Error message: {0}'.format(str(e)),
@@ -166,7 +168,7 @@ def authentication_oauth_post():
             return app.error('Login failed, error: {0}'.format(str(e)))
 
     if is_webview:
-        return render_template('auth_result.html',
+        return await render_template('auth_result.html',
                                title='Login success',
                                result='Login succeeded',
                                message='Welcome {}!'.format(app.logged_in_gamertag),

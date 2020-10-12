@@ -32,14 +32,14 @@ class ConsoleWrap(object):
             )
 
     @staticmethod
-    def discover(*args, **kwargs):
-        return Console.discover(*args, **kwargs)
+    async def discover(*args, **kwargs):
+        return await Console.discover(*args, **kwargs)
 
     @staticmethod
-    def power_on(liveid, addr=None, iterations=3, tries=10):
+    async def power_on(liveid, addr=None, iterations=3, tries=10):
         for i in range(iterations):
-            Console.power_on(liveid, addr=addr, tries=tries)
-            Console.wait(1)
+            await Console.power_on(liveid, addr=addr, tries=tries)
+            await Console.wait(1)
 
     @property
     def media_commands(self):
@@ -273,7 +273,7 @@ class ConsoleWrap(object):
         }
         return data
 
-    def connect(self, userhash=None, xtoken=None):
+    async def connect(self, userhash=None, xtoken=None):
         if not self.console:
             return enum.ConnectionState.Disconnected
         elif self.console.connected:
@@ -281,60 +281,60 @@ class ConsoleWrap(object):
         elif not self.anonymous_connection_allowed and (not userhash or not xtoken):
             raise Exception('Requested anonymous connection is not allowed by console')
 
-        state = self.console.connect(userhash=userhash,
-                                     xsts_token=xtoken)
+        state = await self.console.connect(userhash=userhash,
+                                           xsts_token=xtoken)
 
         if state == enum.ConnectionState.Connected:
-            self.console.wait(0.5)
-            self.console.stump.request_stump_configuration()
+            await self.console.wait(0.5)
+            await self.console.stump.request_stump_configuration()
 
         return state
 
-    def disconnect(self):
-        self.console.disconnect()
+    async def disconnect(self):
+        await self.console.disconnect()
         return True
 
-    def power_off(self):
-        self.console.power_off()
+    async def power_off(self):
+        await self.console.power_off()
         return True
 
-    def launch_title(self, app_id):
-        return self.console.launch_title(app_id)
+    async def launch_title(self, app_id):
+        return await self.console.launch_title(app_id)
 
-    def send_stump_key(self, device_id, button):
-        result = self.console.send_stump_key(button, device_id)
+    async def send_stump_key(self, device_id, button):
+        result = await self.console.send_stump_key(button, device_id)
         print(result)
         return True
 
-    def send_media_command(self, command, seek_position=None):
+    async def send_media_command(self, command, seek_position=None):
         title_id = 0
         request_id = 0
-        self.console.media_command(title_id, command, request_id, seek_position)
+        await self.console.media_command(title_id, command, request_id, seek_position)
         return True
 
-    def send_gamepad_button(self, btn):
-        self.console.gamepad_input(btn)
+    async def send_gamepad_button(self, btn):
+        await self.console.gamepad_input(btn)
         # Its important to clear button-press afterwards
-        self.console.wait(0.1)
-        self.console.gamepad_input(enum.GamePadButton.Clear)
+        await self.console.wait(0.1)
+        await self.console.gamepad_input(enum.GamePadButton.Clear)
         return True
 
-    def send_text(self, text):
+    async def send_text(self, text):
         if not self.text_active:
             return False
 
-        self.console.send_systemtext_input(text)
-        self.console.finish_text_input()
+        await self.console.send_systemtext_input(text)
+        await self.console.finish_text_input()
         return True
 
-    def dvr_record(self, start_delta, end_delta):
-        self.console.game_dvr_record(start_delta, end_delta)
+    async def dvr_record(self, start_delta, end_delta):
+        await self.console.game_dvr_record(start_delta, end_delta)
         return True
 
-    def nano_start(self):
-        self.console.nano.start_stream()
+    async def nano_start(self):
+        await self.console.nano.start_stream()
         return True
 
-    def nano_stop(self):
-        self.console.nano.stop_stream()
+    async def nano_stop(self):
+        await self.console.nano.stop_stream()
         return True

@@ -1,5 +1,5 @@
-from flask import current_app as app
-from flask import request
+from quart import current_app as app
+from quart import request
 from http import HTTPStatus
 from xbox.sg import enum
 from ..decorators import console_exists, console_connected
@@ -8,9 +8,10 @@ from . import routes
 
 
 @routes.route('/device')
-def device_overview():
+async def device_overview():
     addr = request.args.get('addr')
-    discovered = ConsoleWrap.discover(addr=addr).copy()
+    discovered = await ConsoleWrap.discover(addr=addr)
+    discovered = discovered.copy()
 
     liveids = [d.liveid for d in discovered]
     for i, c in enumerate(app.console_cache.values()):
@@ -37,9 +38,9 @@ def device_overview():
 
 
 @routes.route('/device/<liveid>/poweron')
-def poweron(liveid):
+async def poweron(liveid):
     addr = request.args.get('addr')
-    ConsoleWrap.power_on(liveid, addr=addr)
+    await ConsoleWrap.power_on(liveid, addr=addr)
     return app.success()
 
 
@@ -56,14 +57,14 @@ def device_info(console):
 
 @routes.route('/device/<liveid>/connect')
 @console_exists
-def force_connect(console):
+async def force_connect(console):
     try:
         userhash = ''
         xtoken = ''
         if app.authentication_mgr.authenticated and not request.args.get('anonymous'):
             userhash = app.authentication_mgr.userinfo.userhash
             xtoken = app.authentication_mgr.xsts_token.jwt
-        state = console.connect(userhash, xtoken)
+        state = await console.connect(userhash, xtoken)
     except Exception as e:
         return app.error(str(e))
 
@@ -80,15 +81,15 @@ Require connected console
 
 @routes.route('/device/<liveid>/disconnect')
 @console_connected
-def disconnect(console):
-    console.disconnect()
+async def disconnect(console):
+    await console.disconnect()
     return app.success()
 
 
 @routes.route('/device/<liveid>/poweroff')
 @console_connected
-def poweroff(console):
-    if not console.power_off():
+async def poweroff(console):
+    if not await console.power_off():
         return app.error("Failed to power off")
     else:
         return app.success()
@@ -119,8 +120,8 @@ def console_status(console):
 
 @routes.route('/device/<liveid>/launch/<path:app_id>')
 @console_connected
-def launch_title(console, app_id):
-    console.launch_title(app_id)
+async def launch_title(console, app_id):
+    await console.launch_title(app_id)
     return app.success(launched=app_id)
 
 
@@ -185,8 +186,8 @@ def infrared_available_keys(console, device_id):
 
 @routes.route('/device/<liveid>/ir/<device_id>/<button>')
 @console_connected
-def infrared_send(console, device_id, button):
-    if not console.send_stump_key(device_id, button):
+async def infrared_send(console, device_id, button):
+    if not await console.send_stump_key(device_id, button):
         return app.error('Failed to send button')
 
     return app.success(sent_key=button, device_id=device_id)
@@ -200,19 +201,19 @@ def media_overview(console):
 
 @routes.route('/device/<liveid>/media/<command>')
 @console_connected
-def media_command(console, command):
+async def media_command(console, command):
     cmd = console.media_commands.get(command)
     if not cmd:
         return app.error('Invalid command passed, command: {0}'.format(command), HTTPStatus.BAD_REQUEST)
 
-    console.send_media_command(cmd)
+    await console.send_media_command(cmd)
     return app.success()
 
 
 @routes.route('/device/<liveid>/media/seek/<int:seek_position>')
 @console_connected
-def media_command_seek(console, seek_position):
-    console.send_media_command(enum.MediaControlCommand.Seek, seek_position)
+async def media_command_seek(console, seek_position):
+    await console.send_media_command(enum.MediaControlCommand.Seek, seek_position)
     return app.success()
 
 
@@ -224,12 +225,12 @@ def input_overview(console):
 
 @routes.route('/device/<liveid>/input/<button>')
 @console_connected
-def input_send_button(console, button):
+async def input_send_button(console, button):
     btn = console.input_keys.get(button)
     if not btn:
         return app.error('Invalid button passed, button: {0}'.format(button), HTTPStatus.BAD_REQUEST)
 
-    console.send_gamepad_button(btn)
+    await console.send_gamepad_button(btn)
     return app.success()
 
 
@@ -259,14 +260,14 @@ def text_overview(console):
 
 @routes.route('/device/<liveid>/text/<text>')
 @console_connected
-def text_send(console, text):
-    console.send_text(text)
+async def text_send(console, text):
+    await console.send_text(text)
     return app.success()
 
 
 @routes.route('/device/<liveid>/gamedvr')
 @console_connected
-def gamedvr_record(console):
+async def gamedvr_record(console):
     """
     Default to record last 60 seconds
     Adjust with start/end query parameter
@@ -275,7 +276,7 @@ def gamedvr_record(console):
     try:
         start_delta = request.args.get('start', -60)
         end_delta = request.args.get('end', 0)
-        console.dvr_record(int(start_delta), int(end_delta))
+        await console.dvr_record(int(start_delta), int(end_delta))
     except Exception as e:
         return app.error('GameDVR failed, error: {0}'.format(e))
 
@@ -290,13 +291,13 @@ def nano_overview(console):
 
 @routes.route('/device/<liveid>/nano/start')
 @console_connected
-def nano_start(console):
-    console.nano_start()
+async def nano_start(console):
+    await console.nano_start()
     return app.success()
 
 
 @routes.route('/device/<liveid>/nano/stop')
 @console_connected
-def nano_stop(console):
-    console.nano_stop()
+async def nano_stop(console):
+    await console.nano_stop()
     return app.success()

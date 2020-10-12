@@ -34,32 +34,49 @@ Example:
             sys.exit(1)
 """
 
-import gevent
+import asyncio
+import socket
+import logging
 from uuid import UUID
+from typing import Optional, List, Union, Dict, Type
 
+from cryptography.hazmat.primitives.asymmetric.ec import EllipticCurvePublicKey
 from xbox.sg.crypto import Crypto
 from xbox.sg.manager import Manager
-from xbox.sg.enum import PairedIdentityState, DeviceStatus, ConnectionState,\
-    MessageType, PrimaryDeviceFlag, ActiveTitleLocation
-from xbox.sg.protocol import CoreProtocol, ProtocolError
+from xbox.sg.enum import PairedIdentityState, DeviceStatus, ConnectionState, \
+    MessageType, PrimaryDeviceFlag, ActiveTitleLocation, AckStatus, \
+    ServiceChannel, MediaControlCommand, GamePadButton
+from xbox.sg.protocol import SmartglassProtocol, ProtocolError
 from xbox.sg.utils.events import Event
+from xbox.sg.utils.struct import XStruct
+from xbox.stump.manager import StumpManager
+
+LOGGER = logging.getLogger(__name__)
 
 
 class Console(object):
-    __protocol__ = CoreProtocol()
+    __protocol__: SmartglassProtocol = None
 
-    def __init__(self, address, name, uuid, liveid, flags=PrimaryDeviceFlag.Null, last_error=0, public_key=None):
+    def __init__(
+        self,
+        address: str,
+        name: str,
+        uuid: UUID,
+        liveid: str,
+        flags: PrimaryDeviceFlag = PrimaryDeviceFlag.Null,
+        last_error: int = 0,
+        public_key: EllipticCurvePublicKey = None
+    ):
         """
         Initialize an instance of Console
 
         Args:
-            address (str): IP address of console.
-            flags (:class:`PrimaryDeviceFlag`): Primary device flags
-            name (str): Name of console.
-            uuid (:obj:`UUID`): UUID of console.
-            liveid (str): Live ID of console.
-            public_key (:obj:`ec.EllipticCurvePrivateKey`):
-                Console's Public Key.
+            address: IP address of console.
+            flags: Primary device flags
+            name: Name of console.
+            uuid: UUID of console.
+            liveid: Live ID of console.
+            public_key: Console's Public Key.
         """
         self.address = address
         self.name = name
@@ -87,62 +104,83 @@ class Console(object):
         self.on_active_surface = Event()
         self.on_timeout = Event()
 
-        self.managers = {}
+        self.managers: Dict[str, Manager] = {}
         self._functions = {}
+
+        self.on_message = Event()
+        self.on_json = Event()
 
         self.power_on = self._power_on  # Dirty hack
 
-        self._init_protocol()
+        self.protocol: Optional[SmartglassProtocol] = None
 
-    def __repr__(self):
-        return '<Console addr={} name={} uuid={} liveid={} flags={} last_error={}>'.format(
-            self.address, self.name, self.uuid, self.liveid, self.flags, self.last_error
-        )
+    def __repr__(self) -> str:
+        return f'<Console addr={self.address} name={self.name} ' \
+               f'uuid={self.uuid}liveid={self.liveid} flags={self.flags} ' \
+               f'last_error={self.last_error}>'
 
-    def __enter__(self):
+    async def __aenter__(self):
         return self
 
-    def __exit__(self):
-        self.disconnect()
+    async def __aexit__(self) -> None:
+        await self.disconnect()
 
     @staticmethod
-    def wait(seconds):
+    async def wait(seconds: int) -> None:
         """
-        Wrapper around `gevent.sleep`
+        Wrapper around `asyncio.sleep`
 
         Args:
-            seconds (int): Seconds to wait.
+            seconds: Seconds to wait.
 
         Returns: None
         """
-        gevent.sleep(seconds)
+        await asyncio.sleep(seconds)
 
-    def _init_protocol(self):
-        self.protocol = CoreProtocol(self.address, self._crypto)
-        # Proxy protocol event into console
-        self.protocol.on_timeout += self._on_timeout
-        self.protocol.on_message += self._on_message
+    async def _ensure_protocol_started(self) -> None:
+        """
+        Regular protocol instance, setup with crypto and destination address.
+        Targeted at communication with a specific console.
+
+        Returns:
+            None
+        """
+        if not self.protocol:
+            loop = asyncio.get_running_loop()
+            _, self.protocol = await loop.create_datagram_endpoint(
+                lambda: SmartglassProtocol(self.address, self._crypto),
+                family=socket.AF_INET,
+                remote_addr=(self.address, 5050),
+                allow_broadcast=True
+            )
+
+            self.protocol.on_timeout += self._handle_timeout
+            self.protocol.on_message += self._handle_message
+            self.protocol.on_json += self._handle_json
 
     @classmethod
-    def __start_cls_protocol(cls):
+    async def _ensure_global_protocol_started(cls) -> None:
         """
-        Start the protocol internally, if not running
-
-        Returns: None
+        Global protocol instance, used for network wide discovery and poweron.
         """
-        if not cls.__protocol__.started:
-            cls.__protocol__.start()
+        if not cls.__protocol__:
+            loop = asyncio.get_running_loop()
+            _, cls.__protocol__ = await loop.create_datagram_endpoint(
+                lambda: SmartglassProtocol(),
+                family=socket.AF_INET,
+                allow_broadcast=True
+            )
 
     @classmethod
-    def from_message(cls, address, msg):
+    def from_message(cls, address: str, msg: XStruct):
         """
         Initialize the class with a `DiscoveryResponse`.
 
         Args:
-            address (str): IP address of the console
-            msg (:obj:`.StructObj`): Discovery Response struct
+            address: IP address of the console
+            msg: Discovery Response struct
 
-        Returns: :class:`Console`.
+        Returns: Console instance
 
         """
         payload = msg.unprotected_payload
@@ -154,20 +192,25 @@ class Console(object):
         return console
 
     @classmethod
-    def from_dict(cls, d):
+    def from_dict(cls, d: dict):
         return cls(d['address'], d['name'], UUID(d['uuid']), d['liveid'])
 
-    def to_dict(self):
-        return dict(address=self.address, name=self.name, uuid=str(self.uuid), liveid=self.liveid)
+    def to_dict(self) -> dict:
+        return dict(
+            address=self.address,
+            name=self.name,
+            uuid=str(self.uuid),
+            liveid=self.liveid
+        )
 
-    def add_manager(self, manager, *args, **kwargs):
+    def add_manager(self, manager: Type[Manager], *args, **kwargs):
         """
         Add a manager to the console instance.
 
         This will inherit all public methods of the manager class.
 
         Args:
-            manager (:class:`.Manager`):
+            manager: Manager to add
             *args: Arguments
             **kwargs: KwArguments
 
@@ -192,7 +235,15 @@ class Console(object):
 
             self._functions[item] = getattr(manager_inst, item)
 
-    def __getattr__(self, k):
+    def __getattr__(self, k: str):
+        """
+        Accessor to manager functions
+
+        Args:
+            k: Parameter name / key
+
+        Returns: Object requested by k
+        """
         if k in self.managers:
             return self.managers[k]
         elif k in self._functions:
@@ -200,7 +251,7 @@ class Console(object):
         return object.__getattribute__(self, k)
 
     @classmethod
-    def discover(cls, *args, **kwargs):
+    async def discover(cls, *args, **kwargs) -> List:
         """
         Discover consoles on the network.
 
@@ -212,12 +263,12 @@ class Console(object):
             list: List of discovered consoles.
 
         """
-        cls.__start_cls_protocol()
-        discovered = cls.__protocol__.discover(*args, **kwargs)
+        await cls._ensure_global_protocol_started()
+        discovered = await cls.__protocol__.discover(*args, **kwargs)
         return [cls.from_message(a, m) for a, m in discovered.items()]
 
     @classmethod
-    def discovered(cls):
+    def discovered(cls) -> List:
         """
         Get list of already discovered consoles.
 
@@ -229,7 +280,12 @@ class Console(object):
         return [cls.from_message(a, m) for a, m in discovered.items()]
 
     @classmethod
-    def power_on(cls, liveid, addr=None, tries=2):
+    async def power_on(
+        cls,
+        liveid: str,
+        addr: Optional[str] = None,
+        tries=2
+    ) -> None:
         """
         Power On console with given Live ID.
 
@@ -245,13 +301,69 @@ class Console(object):
         Returns: None
 
         """
-        cls.__start_cls_protocol()
-        cls.__protocol__.power_on(liveid, addr, tries)
+        await cls._ensure_global_protocol_started()
+        await cls.__protocol__.power_on(liveid, addr, tries)
 
-    def _power_on(self, tries=2):
-        Console.power_on(self.liveid, self.address, tries)
+    async def send_message(
+        self,
+        msg: XStruct,
+        channel: ServiceChannel = ServiceChannel.Core,
+        addr: Optional[str] = None,
+        blocking: bool = True,
+        timeout: int = 5,
+        retries: int = 3
+    ) -> Optional[XStruct]:
+        """
+        Send message to console.
 
-    def connect(self, userhash=None, xsts_token=None):
+        Args:
+            msg: Unassembled message to send
+            channel: Channel to send the message on,
+                           Enum member of `ServiceChannel`
+            addr: IP address of target console
+            blocking: If set and `msg` is `Message`-packet, wait for ack
+            timeout: Seconds to wait for ack, only useful if `blocking`
+                           is `True`
+            retries: Max retry count.
+
+        Returns: None
+        """
+        if not self.protocol:
+            LOGGER.error('send_message: Protocol not ready')
+            return
+
+        return await self.protocol.send_message(
+            msg, channel, addr, blocking, timeout, retries
+        )
+
+    async def json(
+        self,
+        data: str,
+        channel: ServiceChannel
+    ) -> None:
+        """
+        Send json message
+
+        Args:
+            data: JSON dict
+            channel: Channel to send the message to
+
+        Returns: None
+        """
+        if not self.protocol:
+            LOGGER.error('json: Protocol not ready')
+            return
+
+        return await self.protocol.send_message(data, channel=channel)
+
+    async def _power_on(self, tries: int = 2) -> None:
+        await Console.power_on(self.liveid, self.address, tries)
+
+    async def connect(
+        self,
+        userhash: Optional[str] = None,
+        xsts_token: Optional[str] = None
+    ) -> ConnectionState:
         """
         Connect to the console
 
@@ -262,8 +374,7 @@ class Console(object):
             ConnectionException: If no authentication data is supplied and
                 console disallows anonymous connection.
 
-        Returns:
-            :class:`ConnectionState`: Connection state
+        Returns: Connection state
         """
         if self.connected:
             raise ConnectionError("Already connected")
@@ -273,15 +384,16 @@ class Console(object):
             raise ConnectionError("Anonymous connection not allowed, please"
                                   " supply userhash and auth-token")
 
-        if not self.protocol.started:
-            self.protocol.start()
+        await self._ensure_protocol_started()
 
         self.pairing_state = PairedIdentityState.NotPaired
         self.connection_state = ConnectionState.Connecting
 
         try:
-            self.pairing_state = self.protocol.connect(userhash=userhash,
-                                                       xsts_token=xsts_token)
+            self.pairing_state = await self.protocol.connect(
+                userhash=userhash,
+                xsts_token=xsts_token
+            )
         except ProtocolError as e:
             self.connection_state = ConnectionState.Error
             raise e
@@ -289,33 +401,39 @@ class Console(object):
         self.connection_state = ConnectionState.Connected
         return self.connection_state
 
-    def launch_title(self, uri, location=ActiveTitleLocation.Full):
+    async def launch_title(
+        self,
+        uri: str,
+        location: ActiveTitleLocation = ActiveTitleLocation.Full
+    ) -> AckStatus:
         """
         Launch a title by URI
 
         Args:
-            uri (str): Launch uri
-            location (:class:`ActiveTitleLocation`): Target title location
+            uri: Launch uri
+            location: Target title location
 
-        Returns:
-            int: Member of :class:`AckStatus`
+        Returns: Ack status
         """
-        return self.protocol.launch_title(uri, location)
+        return await self.protocol.launch_title(uri, location)
 
-    def game_dvr_record(self, start_delta, end_delta):
+    async def game_dvr_record(
+        self,
+        start_delta: int,
+        end_delta: int
+    ) -> AckStatus:
         """
         Start Game DVR recording
 
         Args:
-            start_delta (int): Start time
-            end_delta (int): End time
+            start_delta: Start time
+            end_delta: End time
 
-        Returns:
-            int: Member of :class:`AckStatus`
+        Returns: Ack status
         """
-        return self.protocol.game_dvr_record(start_delta, end_delta)
+        return await self.protocol.game_dvr_record(start_delta, end_delta)
 
-    def disconnect(self):
+    async def disconnect(self) -> None:
         """
         Disconnect from console.
 
@@ -326,10 +444,9 @@ class Console(object):
         """
         if self.connection_state == ConnectionState.Connected:
             self.connection_state = ConnectionState.Disconnecting
-            self.protocol.stop()  # Stop also sends SG disconnect message
-            self._reset_state()
+            await self._reset_state()
 
-    def power_off(self):
+    async def power_off(self) -> None:
         """
         Power off the console.
 
@@ -337,19 +454,19 @@ class Console(object):
 
         Returns: None
         """
-        self.protocol.power_off(self.liveid)
-        self._reset_state()
+        await self.protocol.power_off(self.liveid)
+        await self._reset_state()
         self.device_status = DeviceStatus.Unavailable
 
-    def _on_message(self, msg, channel):
+    def _handle_message(self, msg: XStruct, channel: ServiceChannel) -> None:
         """
         Internal handler for console specific messages aka.
         `PairedIdentityStateChange`, `ConsoleStatus` and
         `ActiveSurfaceChange`.
 
         Args:
-            msg (:obj:`XStruct`): Message data
-            channel (:class:`ServiceChannel`): Service channel
+            msg: Message data
+            channel: Service channel
 
         Returns:
             None
@@ -365,25 +482,40 @@ class Console(object):
         elif msg_type == MessageType.ActiveSurfaceChange:
             self.active_surface = msg.protected_payload
 
-    def _on_timeout(self):
+        self.on_message(msg, channel)
+
+    def _handle_json(self, msg: XStruct, channel: ServiceChannel) -> None:
+        """
+        Internal handler for JSON messages
+
+        Args:
+            msg: JSON message instance
+            channel: Service channel originating from
+
+        Returns: None
+        """
+        self.on_json(msg, channel)
+
+    def _handle_timeout(self) -> None:
         """
         Internal handler for console connection timeout.
 
         Returns: None
         """
-        self._reset_state()
+        asyncio.create_task(self._reset_state())
         self.device_status = DeviceStatus.Unavailable
         self.on_timeout()
 
-    def _reset_state(self):
+    async def _reset_state(self) -> None:
         """
         Internal handler to reset the inital state of the console instance.
 
         Returns: None
         """
         if self.protocol and self.protocol.started:
-            self.protocol.stop()
-        self._init_protocol()
+            await self.protocol.stop()
+
+        await self._ensure_protocol_started()
 
         self.connection_state = ConnectionState.Disconnected
         self.pairing_state = PairedIdentityState.NotPaired
@@ -391,17 +523,16 @@ class Console(object):
         self.console_status = None
 
     @property
-    def public_key(self):
+    def public_key(self) -> EllipticCurvePublicKey:
         """
         Console's public key.
 
-        Returns:
-            :obj:`ec.EllipticCurvePrivateKey`: Foreign public key
+        Returns: Foreign public key
         """
         return self._public_key
 
     @public_key.setter
-    def public_key(self, key):
+    def public_key(self, key: Union[EllipticCurvePublicKey, bytes]) -> None:
         if isinstance(key, bytes):
             self._crypto = Crypto.from_bytes(key)
         else:
@@ -410,7 +541,7 @@ class Console(object):
         self._public_key = self._crypto.foreign_pubkey
 
     @property
-    def device_status(self):
+    def device_status(self) -> DeviceStatus:
         """
         Current availability status
 
@@ -420,27 +551,26 @@ class Console(object):
         return self._device_status
 
     @device_status.setter
-    def device_status(self, status):
+    def device_status(self, status: DeviceStatus) -> None:
         self._device_status = status
         self.on_device_status(status)
 
     @property
-    def connection_state(self):
+    def connection_state(self) -> ConnectionState:
         """
         Current connection state
 
-        Returns:
-            :obj:`ConnectionState`
+        Returns: Connection state
         """
         return self._connection_state
 
     @connection_state.setter
-    def connection_state(self, state):
+    def connection_state(self, state: ConnectionState) -> None:
         self._connection_state = state
         self.on_connection_state(state)
 
     @property
-    def pairing_state(self):
+    def pairing_state(self) -> PairedIdentityState:
         """
         Current pairing state
 
@@ -450,7 +580,7 @@ class Console(object):
         return self._pairing_state
 
     @pairing_state.setter
-    def pairing_state(self, state):
+    def pairing_state(self, state: PairedIdentityState) -> None:
         self._pairing_state = state
         self.on_pairing_state(state)
 
@@ -480,76 +610,69 @@ class Console(object):
         return self._active_surface
 
     @active_surface.setter
-    def active_surface(self, active_surface):
+    def active_surface(self, active_surface) -> None:
         self._active_surface = active_surface
         self.on_active_surface(active_surface)
 
     @property
-    def available(self):
+    def available(self) -> bool:
         """
         Check whether console is available aka. discoverable
 
-        Returns:
-            bool: `True` if console is available, `False` otherwise
+        Returns: `True` if console is available, `False` otherwise
         """
         return self.device_status == DeviceStatus.Available
 
     @property
-    def paired(self):
+    def paired(self) -> bool:
         """
         Check whether client is paired to console
 
-        Returns:
-            bool: `True` if console is paired, `False` otherwise
+        Returns: `True` if console is paired, `False` otherwise
         """
         return self.pairing_state == PairedIdentityState.Paired
 
     @property
-    def connected(self):
+    def connected(self) -> bool:
         """
         Check whether client is successfully connected to console
 
-        Returns:
-            bool: `True` if connected, `False` otherwise
+        Returns: `True` if connected, `False` otherwise
         """
         return self.connection_state == ConnectionState.Connected
 
     @property
-    def authenticated_users_allowed(self):
+    def authenticated_users_allowed(self) -> bool:
         """
         Check whether authenticated users are allowed to connect
 
-        Returns:
-            bool: `True` if authenticated users are allowed, `False` otherwise
+        Returns: `True` if authenticated users are allowed, `False` otherwise
         """
         return bool(self.flags & PrimaryDeviceFlag.AllowAuthenticatedUsers)
 
     @property
-    def console_users_allowed(self):
+    def console_users_allowed(self) -> bool:
         """
         Check whether console users are allowed to connect
 
-        Returns:
-            bool: `True` if console users are allowed, `False` otherwise
+        Returns: `True` if console users are allowed, `False` otherwise
         """
         return bool(self.flags & PrimaryDeviceFlag.AllowConsoleUsers)
 
     @property
-    def anonymous_connection_allowed(self):
+    def anonymous_connection_allowed(self) -> bool:
         """
         Check whether anonymous connection is allowed
 
-        Returns:
-            bool: `True` if anonymous connection is allowed, `False` otherwise
+        Returns: `True` if anonymous connection is allowed, `False` otherwise
         """
         return bool(self.flags & PrimaryDeviceFlag.AllowAnonymousUsers)
 
     @property
-    def is_certificate_pending(self):
+    def is_certificate_pending(self) -> bool:
         """
         Check whether certificate is pending
 
-        Returns:
-            bool: `True` if certificate is pending, `False` otherwise
+        Returns: `True` if certificate is pending, `False` otherwise
         """
         return bool(self.flags & PrimaryDeviceFlag.CertificatePending)

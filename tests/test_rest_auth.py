@@ -1,9 +1,11 @@
+import pytest
 from http import HTTPStatus
 
 
-def test_auth_overview(rest_client):
-    resp = rest_client.test_client().get('/auth')
-    json = resp.json
+@pytest.mark.asyncio
+async def test_auth_overview(rest_client):
+    resp = await rest_client.test_client().get('/auth')
+    json = await resp.json
 
     assert resp.status_code == HTTPStatus.OK
     assert json is not None
@@ -21,111 +23,145 @@ def test_auth_overview(rest_client):
     assert json['success'] is True
 
 
-def test_auth_login_get(rest_client):
-    resp = rest_client.test_client().get('/auth/login')
+@pytest.mark.asyncio
+async def test_auth_login_get(rest_client):
+    resp = await rest_client.test_client().get('/auth/login')
+    resp_json = await resp.json
 
     assert resp.status_code == HTTPStatus.OK
-    assert resp.json is None
+    assert resp_json is None
     assert b'Authenticate with Windows Live' in resp.data
 
 
-def test_auth_login_post_no_params(rest_client):
+@pytest.mark.asyncio
+async def test_auth_login_post_no_params(rest_client):
     # No post params
-    resp = rest_client.test_client().post('/auth/login')
+    resp = await rest_client.test_client().post('/auth/login')
+    resp_json = await resp.json
 
     assert resp.status_code == HTTPStatus.BAD_REQUEST
-    assert resp.json['success'] is False
-    assert resp.json['message'] == 'No email or password parameter provided'
+    assert resp_json['success'] is False
+    assert resp_json['message'] == 'No email or password parameter provided'
 
 
-def test_auth_login_post_invalid_credentials(rest_client):
-    resp = rest_client.test_client().post('/auth/login',
-                                          data={'email': 'foo@bar.com', 'password': '123'})
+@pytest.mark.asyncio
+async def test_auth_login_post_invalid_credentials(rest_client):
+    resp = await rest_client.test_client().post('/auth/login',
+                                                data={'email': 'foo@bar.com', 'password': '123'})
+    resp_json = await resp.json
 
     assert resp.status_code == HTTPStatus.INTERNAL_SERVER_ERROR
-    assert resp.json['success'] is False
-    assert 'Login failed' in resp.json['message']
-    assert resp.json['two_factor_required'] is False
+    assert resp_json['success'] is False
+    assert 'Login failed' in resp_json['message']
+    assert resp_json['two_factor_required'] is False
 
 
-def test_auth_login_post_webview_invalid_credentials(rest_client):
-    resp = rest_client.test_client().post('/auth/login',
-                                          data={'webview': True, 'email': 'foo@bar.com',
-                                                'password': '123'})
+@pytest.mark.asyncio
+async def test_auth_login_post_webview_invalid_credentials(rest_client):
+    resp = await rest_client.test_client().post(
+        '/auth/login',
+        data={
+            'webview': True, 'email': 'foo@bar.com',
+            'password': '123'
+        }
+    )
+    resp_json = await resp.json
 
     assert resp.status_code == HTTPStatus.OK
-    assert resp.json is None
+    assert resp_json is None
     assert b'Login failed' in resp.data
 
 
-def test_auth_logout_get_not_logged_in(rest_client):
-    resp = rest_client.test_client().get('/auth/logout')
+@pytest.mark.asyncio
+async def test_auth_logout_get_not_logged_in(rest_client):
+    resp = await rest_client.test_client().get('/auth/logout')
+    resp_json = await resp.json
 
     assert resp.status_code == HTTPStatus.OK
-    assert resp.json is None
+    assert resp_json is None
     assert b'currently not logged in' in resp.data
 
 
-def test_auth_logout_post(rest_client):
-    resp = rest_client.test_client().post('/auth/logout')
+@pytest.mark.asyncio
+async def test_auth_logout_post(rest_client):
+    resp = await rest_client.test_client().post('/auth/logout')
+    resp_json = await resp.json
 
     assert resp.status_code == HTTPStatus.OK
-    assert resp.json['success'] is True
-    assert resp.json['message'] == 'Logout succeeded'
+    assert resp_json['success'] is True
+    assert resp_json['message'] == 'Logout succeeded'
 
 
-def test_auth_logout_post_webview(rest_client):
-    resp = rest_client.test_client().post('/auth/logout', data={'webview': True})
+@pytest.mark.asyncio
+async def test_auth_logout_post_webview(rest_client):
+    resp = await rest_client.test_client().post('/auth/logout', data={'webview': True})
+    resp_json = await resp.json
 
     assert resp.status_code == HTTPStatus.OK
-    assert resp.json is None
+    assert resp_json is None
     assert b'Logout succeeded' in resp.data
 
 
-def test_auth_url(rest_client):
-    resp = rest_client.test_client().get('/auth/url')
+@pytest.mark.asyncio
+async def test_auth_url(rest_client):
+    resp = await rest_client.test_client().get('/auth/url')
+    resp_json = await resp.json
 
     assert resp.status_code == HTTPStatus.OK
-    assert resp.json['success'] is True
-    assert resp.json['authorization_url'] is not None
-    assert resp.json['authorization_url'].startswith('https://login.live.com/oauth20_authorize.srf')
+    assert resp_json['success'] is True
+    assert resp_json['authorization_url'] is not None
+    assert resp_json['authorization_url'].startswith('https://login.live.com/oauth20_authorize.srf')
 
 
-def test_auth_oauth_get(rest_client):
-    resp = rest_client.test_client().get('/auth/oauth')
+@pytest.mark.asyncio
+async def test_auth_oauth_get(rest_client):
+    resp = await rest_client.test_client().get('/auth/oauth')
+    resp_json = await resp.json
 
     assert resp.status_code == HTTPStatus.OK
-    assert resp.json is None
+    assert resp_json is None
     assert b'Login via OAUTH' in resp.data
 
 
-def test_auth_oauth_post_no_params(rest_client):
-    resp = rest_client.test_client().post('/auth/oauth')
+@pytest.mark.asyncio
+async def test_auth_oauth_post_no_params(rest_client):
+    resp = await rest_client.test_client().post('/auth/oauth')
+    resp_json = await resp.json
 
     assert resp.status_code == HTTPStatus.BAD_REQUEST
-    assert resp.json['success'] is False
-    assert resp.json['message'] == 'Please provide redirect_url'
+    assert resp_json['success'] is False
+    assert resp_json['message'] == 'Please provide redirect_url'
 
 
-def test_auth_oauth_post_no_params_webview(rest_client):
-    resp = rest_client.test_client().post('/auth/oauth', data={'webview': True})
+@pytest.mark.asyncio
+async def test_auth_oauth_post_no_params_webview(rest_client):
+    resp = await rest_client.test_client().post('/auth/oauth', data={'webview': True})
+    resp_json = await resp.json
 
     assert resp.status_code == HTTPStatus.BAD_REQUEST
-    assert resp.json['success'] is False
-    assert resp.json['message'] == 'Please provide redirect_url'
+    assert resp_json['success'] is False
+    assert resp_json['message'] == 'Please provide redirect_url'
 
 
-def test_auth_oauth_post_invalid_params(rest_client):
-    resp = rest_client.test_client().post('/auth/oauth', data={'redirect_uri': 'hxxxp:/invalid'})
+@pytest.mark.asyncio
+async def test_auth_oauth_post_invalid_params(rest_client):
+    resp = await rest_client.test_client().post('/auth/oauth', data={'redirect_uri': 'hxxxp:/invalid'})
+    resp_json = await resp.json
 
     assert resp.status_code == HTTPStatus.INTERNAL_SERVER_ERROR
-    assert resp.json['success'] is False
-    assert resp.json['message'].startswith('Login failed')
+    assert resp_json['success'] is False
+    assert resp_json['message'].startswith('Login failed')
 
 
-def test_auth_oauth_post_invalid_params_webview(rest_client):
-    resp = rest_client.test_client().post('/auth/oauth', data={'webview': True,
-                                          'redirect_uri': 'hxxxp:/invalid'})
+@pytest.mark.asyncio
+async def test_auth_oauth_post_invalid_params_webview(rest_client):
+    resp = await rest_client.test_client().post(
+        '/auth/oauth',
+        data={
+            'webview': True,
+            'redirect_uri': 'hxxxp:/invalid'
+        }
+    )
 
     assert resp.status_code == HTTPStatus.OK
     assert b'Login failed' in resp.data

@@ -1,5 +1,7 @@
 import logging
 
+from typing import Any
+
 from xbox.sg import factory
 from xbox.sg.manager import Manager
 from xbox.sg.enum import ServiceChannel, MessageType
@@ -56,16 +58,20 @@ class TitleManager(Manager):
             self.active_surface = payload
 
         else:
-            raise TitleManagerError('Unhandled Msg: {}, Payload: {}'.format(msg_type, payload))
+            raise TitleManagerError(
+                f'Unhandled Msg: {msg_type}, Payload: {payload}'
+            )
 
-    def _request_connection_info(self):
+    async def _request_connection_info(self) -> None:
         msg = factory.title_auxiliary_stream()
-        return self._send_message(msg)
+        return await self._send_message(msg)
 
-    def start_title_channel(self, title_id):
-        return self.console.protocol.start_channel(ServiceChannel.Title,
-                                                   MessageTarget.TitleUUID,
-                                                   title_id=title_id)
+    async def start_title_channel(self, title_id: int) -> Any:
+        return await self.console.protocol.start_channel(
+            ServiceChannel.Title,
+            MessageTarget.TitleUUID,
+            title_id=title_id
+        )
 
     @property
     def active_surface(self):

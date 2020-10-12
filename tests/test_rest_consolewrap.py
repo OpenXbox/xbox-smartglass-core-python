@@ -13,15 +13,16 @@ def test_consolewrap_init(console):
     assert 'stump' in wrap.console.managers
     assert 'media' in wrap.console.managers
 
-
-def test_discover():
-    discovered = ConsoleWrap.discover(tries=1, blocking=False, timeout=1)
+@pytest.mark.asyncio
+async def test_discover():
+    discovered = await ConsoleWrap.discover(tries=1, blocking=False, timeout=1)
 
     assert isinstance(discovered, list)
 
 
-def test_poweron():
-    ConsoleWrap.power_on('FD0123456789', tries=1, iterations=1)
+@pytest.mark.asyncio
+async def test_poweron():
+    await ConsoleWrap.power_on('FD0123456789', tries=1, iterations=1)
 
 
 def test_media_commands(console):
@@ -209,17 +210,18 @@ def test_status(console):
     assert isinstance(status['is_certificate_pending'], bool)
 
 
-def test_connect(console):
+@pytest.mark.asyncio
+async def test_connect(console):
     console.flags = enum.PrimaryDeviceFlag.AllowAuthenticatedUsers
     console._device_status = enum.DeviceStatus.Available
     console._connection_state = enum.ConnectionState.Disconnected
     console._pairing_state = enum.PairedIdentityState.NotPaired
 
     with pytest.raises(Exception):
-        ConsoleWrap(console).connect()
+        await ConsoleWrap(console).connect()
 
     console._connection_state = enum.ConnectionState.Connected
-    state = ConsoleWrap(console).connect()
+    state = await ConsoleWrap(console).connect()
     assert state == enum.ConnectionState.Connected
 
     console._connection_state = enum.ConnectionState.Disconnected
