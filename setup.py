@@ -36,7 +36,7 @@ setup(
         'dpkt==1.9.4',
         'pydantic==1.6.1',
         'aioconsole==0.3.0',
-        'quart==0.6.15'
+        'fastapi==0.61.1'
     ],
     setup_requires=['pytest-runner'],
     tests_require=['pytest', 'pytest-console-scripts', 'pytest-asyncio'],

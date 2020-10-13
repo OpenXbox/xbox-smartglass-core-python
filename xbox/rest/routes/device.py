@@ -1,15 +1,16 @@
-from quart import current_app as app
-from quart import request
+from typing import Optional
+
+from fastapi import APIRouter, Depends
 from http import HTTPStatus
 from xbox.sg import enum
-from ..decorators import console_exists, console_connected
+from ..deps import console_exists, console_connected
 from ..consolewrap import ConsoleWrap
-from . import routes
 
 
-@routes.route('/device')
-async def device_overview():
-    addr = request.args.get('addr')
+router = APIRouter()
+
+@router.get('/')
+async def device_overview(addr: Optional[str] = None):
     discovered = await ConsoleWrap.discover(addr=addr)
     discovered = discovered.copy()
 
@@ -37,11 +38,10 @@ async def device_overview():
     return app.success(devices=data)
 
 
-@routes.route('/device/<liveid>/poweron')
-async def poweron(liveid):
-    addr = request.args.get('addr')
+@router.get('/{liveid}/poweron')
+async def poweron(liveid: str, addr: Optional[str] = None):
     await ConsoleWrap.power_on(liveid, addr=addr)
-    return app.success()
+    return Ok()
 
 
 """
@@ -49,19 +49,22 @@ Require enumerated console
 """
 
 
-@routes.route('/device/<liveid>')
-@console_exists
-def device_info(console):
-    return app.success(device=console.status)
+@router.get('/{liveid}')
+def device_info(
+    console: ConsoleWrap = Depends(console_exists)
+):
+    return console.status
 
 
-@routes.route('/device/<liveid>/connect')
-@console_exists
-async def force_connect(console):
+@router.get('/{liveid}/connect')
+async def force_connect(
+    console: ConsoleWrap = Depends(console_exists),
+    anonymous: Optional[bool] = True
+):
     try:
         userhash = ''
         xtoken = ''
-        if app.authentication_mgr.authenticated and not request.args.get('anonymous'):
+        if app.authentication_mgr.authenticated and not anonymous:
             userhash = app.authentication_mgr.userinfo.userhash
             xtoken = app.authentication_mgr.xsts_token.jwt
         state = await console.connect(userhash, xtoken)
@@ -79,25 +82,28 @@ Require connected console
 """
 
 
-@routes.route('/device/<liveid>/disconnect')
-@console_connected
-async def disconnect(console):
+@router.get('/{liveid}/disconnect')
+async def disconnect(
+    console: ConsoleWrap = Depends(console_connected)
+):
     await console.disconnect()
     return app.success()
 
 
-@routes.route('/device/<liveid>/poweroff')
-@console_connected
-async def poweroff(console):
+@router.get('/{liveid}/poweroff')
+async def poweroff(
+    console: ConsoleWrap = Depends(console_connected)
+):
     if not await console.power_off():
         return app.error("Failed to power off")
     else:
         return app.success()
 
 
-@routes.route('/device/<liveid>/console_status')
-@console_connected
-def console_status(console):
+@router.get('/{liveid}/console_status')
+def console_status(
+    console: ConsoleWrap = Depends(console_connected)
+):
     status = console.console_status
     client = app.xbl_client
     # Update Title Info
@@ -118,22 +124,27 @@ def console_status(console):
     return app.success(console_status=status)
 
 
-@routes.route('/device/<liveid>/launch/<path:app_id>')
-@console_connected
-async def launch_title(console, app_id):
+@router.get('/{liveid}/launch/{app_id}')
+async def launch_title(
+    console: ConsoleWrap = Depends(console_connected),
+    *,
+    app_id: str
+):
     await console.launch_title(app_id)
     return app.success(launched=app_id)
 
 
-@routes.route('/device/<liveid>/media_status')
-@console_connected
-def media_status(console):
+@router.get('/{liveid}/media_status')
+def media_status(
+    console: ConsoleWrap = Depends(console_connected)
+):
     return app.success(media_status=console.media_status)
 
 
-@routes.route('/device/<liveid>/ir')
-@console_connected
-def infrared(console):
+@router.get('/{liveid}/ir')
+def infrared(
+    console: ConsoleWrap = Depends(console_connected)
+):
     stump_config = console.stump_config
 
     devices = {}
@@ -157,9 +168,12 @@ def infrared(console):
     return app.success(**devices)
 
 
-@routes.route('/device/<liveid>/ir/<device_id>')
-@console_connected
-def infrared_available_keys(console, device_id):
+@router.get('/{liveid}/ir/{device_id}')
+def infrared_available_keys(
+    console: ConsoleWrap = Depends(console_connected),
+    *,
+    device_id: str
+):
     stump_config = console.stump_config
     for device_config in stump_config.params:
         if device_config.device_id != device_id:
@@ -184,24 +198,32 @@ def infrared_available_keys(console, device_id):
     return app.error('Device Id \'{0}\' not found'.format(device_id), HTTPStatus.BAD_REQUEST)
 
 
-@routes.route('/device/<liveid>/ir/<device_id>/<button>')
-@console_connected
-async def infrared_send(console, device_id, button):
+@router.get('/{liveid}/ir/{device_id}/{button}')
+async def infrared_send(
+    console: ConsoleWrap = Depends(console_connected),
+    *,
+    device_id: str,
+    button: str
+):
     if not await console.send_stump_key(device_id, button):
         return app.error('Failed to send button')
 
     return app.success(sent_key=button, device_id=device_id)
 
 
-@routes.route('/device/<liveid>/media')
-@console_connected
-def media_overview(console):
+@router.get('/{liveid}/media')
+def media_overview(
+    console: ConsoleWrap = Depends(console_connected)
+):
     return app.success(commands=list(console.media_commands.keys()))
 
 
-@routes.route('/device/<liveid>/media/<command>')
-@console_connected
-async def media_command(console, command):
+@router.get('/{liveid}/media/{command}')
+async def media_command(
+    console: ConsoleWrap = Depends(console_connected),
+    *,
+    command: str
+):
     cmd = console.media_commands.get(command)
     if not cmd:
         return app.error('Invalid command passed, command: {0}'.format(command), HTTPStatus.BAD_REQUEST)
@@ -210,22 +232,29 @@ async def media_command(console, command):
     return app.success()
 
 
-@routes.route('/device/<liveid>/media/seek/<int:seek_position>')
-@console_connected
-async def media_command_seek(console, seek_position):
+@router.get('/{liveid}/media/seek/{seek_position}')
+async def media_command_seek(
+    console: ConsoleWrap = Depends(console_connected),
+    *,
+    seek_position: int
+):
     await console.send_media_command(enum.MediaControlCommand.Seek, seek_position)
     return app.success()
 
 
-@routes.route('/device/<liveid>/input')
-@console_connected
-def input_overview(console):
+@router.get('/{liveid}/input')
+def input_overview(
+    console: ConsoleWrap = Depends(console_connected)
+):
     return app.success(buttons=list(console.input_keys.keys()))
 
 
-@routes.route('/device/<liveid>/input/<button>')
-@console_connected
-async def input_send_button(console, button):
+@router.get('/{liveid}/input/{button}')
+async def input_send_button(
+    console: ConsoleWrap = Depends(console_connected),
+    *,
+    button: str
+):
     btn = console.input_keys.get(button)
     if not btn:
         return app.error('Invalid button passed, button: {0}'.format(button), HTTPStatus.BAD_REQUEST)
@@ -234,70 +263,58 @@ async def input_send_button(console, button):
     return app.success()
 
 
-@routes.route('/device/<liveid>/stump/headend')
-@console_connected
-def stump_headend_info(console):
+@router.get('/{liveid}/stump/headend')
+def stump_headend_info(
+    console: ConsoleWrap = Depends(console_connected)
+):
     return app.success(headend_info=console.headend_info.params.dump())
 
 
-@routes.route('/device/<liveid>/stump/livetv')
-@console_connected
-def stump_livetv_info(console):
+@router.get('/{liveid}/stump/livetv')
+def stump_livetv_info(
+    console: ConsoleWrap = Depends(console_connected)
+):
     return app.success(livetv_info=console.livetv_info.params.dump())
 
 
-@routes.route('/device/<liveid>/stump/tuner_lineups')
-@console_connected
-def stump_tuner_lineups(console):
+@router.get('/{liveid}/stump/tuner_lineups')
+def stump_tuner_lineups(
+    console: ConsoleWrap = Depends(console_connected)
+):
     return app.success(tuner_lineups=console.tuner_lineups.params.dump())
 
 
-@routes.route('/device/<liveid>/text')
-@console_connected
-def text_overview(console):
+@router.get('/{liveid}/text')
+def text_overview(
+    console: ConsoleWrap = Depends(console_connected)
+):
     return app.success(text_session_active=console.text_active)
 
 
-@routes.route('/device/<liveid>/text/<text>')
-@console_connected
-async def text_send(console, text):
+@router.get('/{liveid}/text/{text}')
+async def text_send(
+    console: ConsoleWrap = Depends(console_connected),
+    *,
+    text: str
+):
     await console.send_text(text)
     return app.success()
 
 
-@routes.route('/device/<liveid>/gamedvr')
-@console_connected
-async def gamedvr_record(console):
+@router.get('/{liveid}/gamedvr')
+async def gamedvr_record(
+    console: ConsoleWrap = Depends(console_connected),
+    start: Optional[int] = -60,
+    end: Optional[int] = 0
+):
     """
     Default to record last 60 seconds
     Adjust with start/end query parameter
     (delta time in seconds)
     """
     try:
-        start_delta = request.args.get('start', -60)
-        end_delta = request.args.get('end', 0)
-        await console.dvr_record(int(start_delta), int(end_delta))
+        await console.dvr_record(start, end)
     except Exception as e:
         return app.error('GameDVR failed, error: {0}'.format(e))
 
-    return app.success()
-
-
-@routes.route('/device/<liveid>/nano')
-@console_connected
-def nano_overview(console):
-    return app.success(nano_status=console.nano_status)
-
-
-@routes.route('/device/<liveid>/nano/start')
-@console_connected
-async def nano_start(console):
-    await console.nano_start()
-    return app.success()
-
-
-@routes.route('/device/<liveid>/nano/stop')
-@console_connected
-async def nano_stop(console):
-    await console.nano_stop()
     return app.success()

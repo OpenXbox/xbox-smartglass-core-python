@@ -21,16 +21,6 @@ class ConsoleWrap(object):
         if 'stump' not in self.console.managers:
             self.console.add_manager(StumpManager)
 
-        try:
-            from xbox.nano.manager import NanoManager
-            if 'nano' not in self.console.managers:
-                self.console.add_manager(NanoManager)
-        except ImportError:
-            log.warning(
-                'Failed to import NanoManager (depends on xbox-smartglass-nano).'
-                ' /nano endpoint will not work!'
-            )
-
     @staticmethod
     async def discover(*args, **kwargs):
         return await Console.discover(*args, **kwargs)
@@ -250,29 +240,6 @@ class ConsoleWrap(object):
         if self.usable:
             return self.console.text.got_active_session
 
-    @property
-    def nano_status(self):
-        if not self.usable or 'nano' not in self.console.managers:
-            return None
-
-        nano = self.console.nano
-        data = {
-            'client_major_version': nano.client_major_version,
-            'client_minor_version': nano.client_minor_version,
-            'server_major_version': nano.server_major_version,
-            'server_minor_version': nano.server_minor_version,
-            'session_id': nano.session_id,
-            'stream_can_be_enabled': nano.stream_can_be_enabled,
-            'stream_enabled': nano.stream_enabled,
-            'stream_state': nano.stream_state.name.lower(),
-            'transmit_linkspeed': nano.transmit_linkspeed,
-            'wireless': nano.wireless,
-            'wireless_channel': nano.wireless_channel,
-            'udp_port': nano.udp_port,
-            'tcp_port': nano.tcp_port
-        }
-        return data
-
     async def connect(self, userhash=None, xtoken=None):
         if not self.console:
             return enum.ConnectionState.Disconnected
@@ -329,12 +296,4 @@ class ConsoleWrap(object):
 
     async def dvr_record(self, start_delta, end_delta):
         await self.console.game_dvr_record(start_delta, end_delta)
-        return True
-
-    async def nano_start(self):
-        await self.console.nano.start_stream()
-        return True
-
-    async def nano_stop(self):
-        await self.console.nano.stop_stream()
         return True

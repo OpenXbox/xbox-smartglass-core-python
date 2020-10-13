@@ -1,12 +1,16 @@
-from quart import current_app as app
-from quart import request, jsonify
-from ..decorators import require_authentication
-from . import routes
+from typing import Optional
 
+from fastapi import APIRouter, Depends
+from ..deps import require_authentication
 
-@routes.route('/web/title/<title_id>')
-@require_authentication
-def download_title_info(client, title_id):
+router = APIRouter()
+
+@router.get('/title/<title_id>')
+def download_title_info(
+    client = Depends(require_authentication),
+    *,
+    title_id: int
+):
     try:
         resp = client.titlehub.get_title_info(title_id, 'image').json()
         return jsonify(resp['titles'][0])
@@ -18,22 +22,24 @@ def download_title_info(client, title_id):
         return app.error('Download of titleinfo failed, error: {0}'.format(e))
 
 
-@routes.route('/web/titlehistory')
-@require_authentication
-def download_title_history(client):
+@router.get('/titlehistory')
+def download_title_history(
+    client = Depends(require_authentication),
+    max_items: Optional[int] = 5
+):
     try:
-        max_items = request.args.get('max_items') or 5
         resp = client.titlehub.get_title_history(app.xbl_client.xuid, max_items=max_items).json()
         return jsonify(resp)
     except Exception as e:
         return app.error('Download of titlehistory failed, error: {0}'.format(e))
 
 
-@routes.route('/web/pins')
-@require_authentication
-def download_pins(client):
+@router.get('/pins')
+async def download_pins(
+    client = Depends(require_authentication)
+):
     try:
         resp = client.lists.get_items(app.xbl_client.xuid, {}).json()
-        return jsonify(resp)
+        return await resp.json()
     except Exception as e:
         return app.error('Download of pins failed, error: {0}'.format(e))

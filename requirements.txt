@@ -5,7 +5,7 @@ cryptography==3.1.1
 dpkt==1.9.4
 pydantic==1.6.1
 aioconsole==0.3.0
-quart==0.6.15
+fastapi==0.61.1
 
 # Dev
 pip==20.2.3
