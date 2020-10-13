@@ -5,7 +5,7 @@ from .. import SMARTGLASS_PACKAGENAMES
 router = APIRouter()
 
 @router.get('/', response_model=root.IndexResponse)
-def library_versions():
+def get_index():
     import pkg_resources
 
     versions = {}

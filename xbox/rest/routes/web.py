@@ -1,45 +1,49 @@
 from typing import Optional
 
-from fastapi import APIRouter, Depends
-from ..deps import require_authentication
+from fastapi import APIRouter, Depends, HTTPException
+from ..deps import require_xbl_client
+
+from xbox.webapi.api.client import XboxLiveClient
+from xbox.webapi.api.provider.titlehub import models as titlehub_models
+from xbox.webapi.api.provider.lists import models as lists_models
 
 router = APIRouter()
 
-@router.get('/title/<title_id>')
-def download_title_info(
-    client = Depends(require_authentication),
+@router.get('/title/<title_id>', response_model=titlehub_models.Title)
+async def download_title_info(
+    client: XboxLiveClient = Depends(require_xbl_client),
     *,
     title_id: int
 ):
     try:
-        resp = client.titlehub.get_title_info(title_id, 'image').json()
-        return jsonify(resp['titles'][0])
+        resp = await client.titlehub.get_title_info(title_id, 'image')
+        return resp.titles[0]
     except KeyError:
-        return app.error('Cannot find titles-node json response')
+        raise HTTPException(status_code=404, detail='Cannot find titles-node json response')
     except IndexError:
-        return app.error('No info for requested title not found')
+        raise HTTPException(status_code=404, detail='No info for requested title not found')
     except Exception as e:
-        return app.error('Download of titleinfo failed, error: {0}'.format(e))
+        raise HTTPException(status_code=400, detail=f'Download of titleinfo failed, error: {e}')
 
 
-@router.get('/titlehistory')
-def download_title_history(
-    client = Depends(require_authentication),
+@router.get('/titlehistory', response_model=titlehub_models.TitleHubResponse)
+async def download_title_history(
+    client: XboxLiveClient = Depends(require_xbl_client),
     max_items: Optional[int] = 5
 ):
     try:
-        resp = client.titlehub.get_title_history(app.xbl_client.xuid, max_items=max_items).json()
-        return jsonify(resp)
+        resp = await client.titlehub.get_title_history(app.xbl_client.xuid, max_items=max_items)
+        return resp
     except Exception as e:
-        return app.error('Download of titlehistory failed, error: {0}'.format(e))
+        return HTTPException(status_code=400, detail=f'Download of titlehistory failed, error: {e}')
 
 
-@router.get('/pins')
+@router.get('/pins', response_model=lists_models.ListsResponse)
 async def download_pins(
-    client = Depends(require_authentication)
+    client: XboxLiveClient = Depends(require_xbl_client)
 ):
     try:
-        resp = client.lists.get_items(app.xbl_client.xuid, {}).json()
-        return await resp.json()
+        resp = await client.lists.get_items(app.xbl_client.xuid, {})
+        return resp
     except Exception as e:
-        return app.error('Download of pins failed, error: {0}'.format(e))
+        return HTTPException(status_code=400, detail=f'Download of pins failed, error: {e}')

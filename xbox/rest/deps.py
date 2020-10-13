@@ -24,3 +24,6 @@ def require_authentication(
     auth_header: str = Header(default=None, alias='Authorization')
 ) -> Tuple[str, str]:
     return 'userhash', 'jwt'
+
+def require_xbl_client():
+    return None
