@@ -1,15 +1,18 @@
 from typing import Optional
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from http import HTTPStatus
 from xbox.sg import enum
+from xbox.stump import json_model as stump_schemas
+
 from ..deps import console_exists, console_connected
 from ..consolewrap import ConsoleWrap
+from .. import schemas
 
 
 router = APIRouter()
 
-@router.get('/')
+@router.get('/', response_model=schemas.DeviceOverviewResponse)
 async def device_overview(addr: Optional[str] = None):
     discovered = await ConsoleWrap.discover(addr=addr)
     discovered = discovered.copy()
@@ -35,13 +38,13 @@ async def device_overview(addr: Optional[str] = None):
     # Filter for specific console when ip address query is supplied (if available)
     data = {console.liveid: console.status for console in app.console_cache.values()
             if (addr and console.status.get('address') == addr) or not addr}
-    return app.success(devices=data)
+    return schemas.DeviceOverviewResponse(devices=data)
 
 
-@router.get('/{liveid}/poweron')
+@router.get('/{liveid}/poweron', response_model=schemas.GeneralResponse)
 async def poweron(liveid: str, addr: Optional[str] = None):
     await ConsoleWrap.power_on(liveid, addr=addr)
-    return Ok()
+    return schemas.GeneralResponse(success=True)
 
 
 """
@@ -49,14 +52,14 @@ Require enumerated console
 """
 
 
-@router.get('/{liveid}')
+@router.get('/{liveid}', response_model=schemas.DeviceStatusResponse)
 def device_info(
     console: ConsoleWrap = Depends(console_exists)
 ):
     return console.status
 
 
-@router.get('/{liveid}/connect')
+@router.get('/{liveid}/connect', response_model=schemas.GeneralResponse)
 async def force_connect(
     console: ConsoleWrap = Depends(console_exists),
     anonymous: Optional[bool] = True
@@ -69,12 +72,12 @@ async def force_connect(
             xtoken = app.authentication_mgr.xsts_token.jwt
         state = await console.connect(userhash, xtoken)
     except Exception as e:
-        return app.error(str(e))
+        raise HTTPException(status_code=400, detail=f'error: {str(e)}')
 
     if state != enum.ConnectionState.Connected:
-        return app.error('Connection failed', connection_state=state.name)
+        raise HTTPException(status_code=400, detail='Connection failed')
 
-    return app.success(connection_state=state.name)
+    return schemas.GeneralResponse(success=True, details={'connection_state': state})
 
 
 """
@@ -82,66 +85,66 @@ Require connected console
 """
 
 
-@router.get('/{liveid}/disconnect')
+@router.get('/{liveid}/disconnect', response_model=schemas.GeneralResponse)
 async def disconnect(
     console: ConsoleWrap = Depends(console_connected)
 ):
     await console.disconnect()
-    return app.success()
+    return schemas.GeneralResponse(success=True)
 
 
-@router.get('/{liveid}/poweroff')
+@router.get('/{liveid}/poweroff', response_model=schemas.GeneralResponse)
 async def poweroff(
     console: ConsoleWrap = Depends(console_connected)
 ):
     if not await console.power_off():
-        return app.error("Failed to power off")
-    else:
-        return app.success()
+        raise HTTPException(status_code=400, detail='Failed to power off')
+
+    return schemas.GeneralResponse(success=True)
 
 
-@router.get('/{liveid}/console_status')
-def console_status(
+@router.get('/{liveid}/console_status', response_model=schemas.ConsoleStatusResponse)
+async def console_status(
     console: ConsoleWrap = Depends(console_connected)
 ):
     status = console.console_status
     client = app.xbl_client
     # Update Title Info
     if client and status:
-        for t in status['active_titles']:
+        for t in status.active_titles:
             try:
-                title_id = t['title_id']
+                title_id = t.title_id
                 resp = app.title_cache.get(title_id)
                 if not resp:
-                    resp = client.titlehub.get_title_info(title_id, 'image').json()
-                if resp['titles'][0]:
+                    resp = await client.titlehub.get_title_info(title_id, 'image')
+                if resp.titles[0]:
                     app.title_cache[title_id] = resp
-                    t['name'] = resp['titles'][0]['name']
-                    t['image'] = resp['titles'][0]['displayImage']
-                    t['type'] = resp['titles'][0]['type']
+                    t.name = resp.titles[0].name
+                    t.image = resp.titles[0].display_image
+                    t.type = resp.titles[0].type
             except Exception:
                 pass
-    return app.success(console_status=status)
+    return status
 
 
-@router.get('/{liveid}/launch/{app_id}')
+@router.get('/{liveid}/launch/{app_id}', response_model=schemas.GeneralResponse)
 async def launch_title(
     console: ConsoleWrap = Depends(console_connected),
     *,
     app_id: str
 ):
     await console.launch_title(app_id)
-    return app.success(launched=app_id)
+    return schemas.GeneralResponse(success=True, details={'launched': app_id})
 
 
-@router.get('/{liveid}/media_status')
+@router.get('/{liveid}/media_status', response_model=schemas.MediaStateResponse)
 def media_status(
     console: ConsoleWrap = Depends(console_connected)
 ):
-    return app.success(media_status=console.media_status)
+    return console.media_status
 
 
-@router.get('/{liveid}/ir')
+@router.get('/{liveid}/ir', response_model=schemas.InfraredResponse)
 def infrared(
     console: ConsoleWrap = Depends(console_connected)
 ):
@@ -151,24 +154,24 @@ def infrared(
     for device_config in stump_config.params:
         button_links = {}
         for button in device_config.buttons:
-            button_links[button] = {
-                'url': '/device/{0}/ir/{1}/{2}'.format(console.liveid, device_config.device_id, button),
-                'value': device_config.buttons[button]
-            }
+            button_links[button] = schemas.InfraredButton(
+                url='/device/{0}/ir/{1}/{2}'.format(console.liveid, device_config.device_id, button),
+                value=device_config.buttons[button]
+            )
 
-        devices[device_config.device_type] = {
-            'device_type': device_config.device_type,
-            'device_brand': device_config.device_brand,
-            'device_model': device_config.device_model,
-            'device_name': device_config.device_name,
-            'device_id': device_config.device_id,
-            'buttons': button_links
-        }
+        devices[device_config.device_type] = schemas.InfraredDevice(
+            device_type=device_config.device_type,
+            device_brand=device_config.device_brand,
+            device_model=device_config.device_model,
+            device_name=device_config.device_name,
+            device_id=device_config.device_id,
+            buttons=button_links
+        )
 
-    return app.success(**devices)
+    return schemas.InfraredResponse(**devices)
 
 
-@router.get('/{liveid}/ir/{device_id}')
+@router.get('/{liveid}/ir/{device_id}', response_model=schemas.InfraredDevice)
 def infrared_available_keys(
     console: ConsoleWrap = Depends(console_connected),
     *,
@@ -181,12 +184,12 @@ def infrared_available_keys(
 
         button_links = {}
         for button in device_config.buttons:
-            button_links[button] = {
-                'url': '/device/{0}/ir/{1}/{2}'.format(console.liveid, device_config.device_id, button),
-                'value': device_config.buttons[button]
-            }
+            button_links[button] = schemas.InfraredButton(
+                url='/device/{0}/ir/{1}/{2}'.format(console.liveid, device_config.device_id, button),
+                value=device_config.buttons[button]
+            )
 
-        return app.success(
+        return schemas.InfraredDevice(
             device_type=device_config.device_type,
             device_brand=device_config.device_brand,
             device_model=device_config.device_model,
@@ -195,10 +198,10 @@ def infrared_available_keys(
             buttons=button_links
         )
 
-    return app.error('Device Id \'{0}\' not found'.format(device_id), HTTPStatus.BAD_REQUEST)
+    raise HTTPException(status_code=400, detail=f'Device Id \'{device_id}\' not found')
 
 
-@router.get('/{liveid}/ir/{device_id}/{button}')
+@router.get('/{liveid}/ir/{device_id}/{button}', response_model=schemas.GeneralResponse)
 async def infrared_send(
     console: ConsoleWrap = Depends(console_connected),
     *,
@@ -206,19 +209,19 @@ async def infrared_send(
     button: str
 ):
     if not await console.send_stump_key(device_id, button):
-        return app.error('Failed to send button')
+        raise HTTPException(status_code=400, detail='Failed to send button')
 
-    return app.success(sent_key=button, device_id=device_id)
+    return schemas.GeneralResponse(success=True, details={'sent_key': button, 'device_id': device_id})
 
 
-@router.get('/{liveid}/media')
+@router.get('/{liveid}/media', response_model=schemas.MediaCommandsResponse)
 def media_overview(
     console: ConsoleWrap = Depends(console_connected)
 ):
-    return app.success(commands=list(console.media_commands.keys()))
+    return schemas.MediaCommandsResponse(commands=list(console.media_commands.keys()))
 
 
-@router.get('/{liveid}/media/{command}')
+@router.get('/{liveid}/media/{command}', response_model=schemas.GeneralResponse)
 async def media_command(
     console: ConsoleWrap = Depends(console_connected),
     *,
@@ -226,30 +229,30 @@ async def media_command(
 ):
     cmd = console.media_commands.get(command)
     if not cmd:
-        return app.error('Invalid command passed, command: {0}'.format(command), HTTPStatus.BAD_REQUEST)
+        raise HTTPException(status_code=400, detail=f'Invalid command passed, command: {command}')
 
     await console.send_media_command(cmd)
-    return app.success()
+    return schemas.GeneralResponse(success=True)
 
 
-@router.get('/{liveid}/media/seek/{seek_position}')
+@router.get('/{liveid}/media/seek/{seek_position}', response_model=schemas.GeneralResponse)
 async def media_command_seek(
     console: ConsoleWrap = Depends(console_connected),
     *,
     seek_position: int
 ):
     await console.send_media_command(enum.MediaControlCommand.Seek, seek_position)
-    return app.success()
+    return schemas.GeneralResponse(success=True)
 
 
-@router.get('/{liveid}/input')
+@router.get('/{liveid}/input', response_model=schemas.InputResponse)
 def input_overview(
     console: ConsoleWrap = Depends(console_connected)
 ):
-    return app.success(buttons=list(console.input_keys.keys()))
+    return schemas.InputResponse(buttons=list(console.input_keys.keys()))
 
 
-@router.get('/{liveid}/input/{button}')
+@router.get('/{liveid}/input/{button}', response_model=schemas.GeneralResponse)
 async def input_send_button(
     console: ConsoleWrap = Depends(console_connected),
     *,
@@ -257,51 +260,51 @@ async def input_send_button(
 ):
     btn = console.input_keys.get(button)
     if not btn:
-        return app.error('Invalid button passed, button: {0}'.format(button), HTTPStatus.BAD_REQUEST)
+        raise HTTPException(status_code=400, detail=f'Invalid button passed, button: {button}')
 
     await console.send_gamepad_button(btn)
-    return app.success()
+    return schemas.GeneralResponse(success=True)
 
 
-@router.get('/{liveid}/stump/headend')
+@router.get('/{liveid}/stump/headend', response_model=stump_schemas.HeadendInfo)
 def stump_headend_info(
     console: ConsoleWrap = Depends(console_connected)
 ):
-    return app.success(headend_info=console.headend_info.params.dump())
+    return console.headend_info
 
 
-@router.get('/{liveid}/stump/livetv')
+@router.get('/{liveid}/stump/livetv', response_model=stump_schemas.LiveTvInfo)
 def stump_livetv_info(
     console: ConsoleWrap = Depends(console_connected)
 ):
-    return app.success(livetv_info=console.livetv_info.params.dump())
+    return console.livetv_info
 
 
-@router.get('/{liveid}/stump/tuner_lineups')
+@router.get('/{liveid}/stump/tuner_lineups', response_model=stump_schemas.TunerLineups)
 def stump_tuner_lineups(
     console: ConsoleWrap = Depends(console_connected)
 ):
-    return app.success(tuner_lineups=console.tuner_lineups.params.dump())
+    return console.tuner_lineups
 
 
-@router.get('/{liveid}/text')
+@router.get('/{liveid}/text', response_model=schemas.device.TextSessionActiveResponse)
 def text_overview(
     console: ConsoleWrap = Depends(console_connected)
 ):
-    return app.success(text_session_active=console.text_active)
+    return schemas.TextSessionActiveResponse(text_session_active=console.text_active)
 
 
-@router.get('/{liveid}/text/{text}')
+@router.get('/{liveid}/text/{text}', response_model=schemas.GeneralResponse)
 async def text_send(
     console: ConsoleWrap = Depends(console_connected),
     *,
     text: str
 ):
     await console.send_text(text)
-    return app.success()
+    return schemas.GeneralResponse(success=True)
 
 
-@router.get('/{liveid}/gamedvr')
+@router.get('/{liveid}/gamedvr', response_model=schemas.GeneralResponse)
 async def gamedvr_record(
     console: ConsoleWrap = Depends(console_connected),
     start: Optional[int] = -60,
@@ -315,6 +318,6 @@ async def gamedvr_record(
     try:
         await console.dvr_record(start, end)
     except Exception as e:
-        return app.error('GameDVR failed, error: {0}'.format(e))
+        raise HTTPException(status_code=400, detail=f'GameDVR failed, error: {e}')
 
-    return app.success()
+    return schemas.GeneralResponse(success=True)

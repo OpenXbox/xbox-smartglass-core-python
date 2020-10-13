@@ -1,15 +1,19 @@
+from typing import Dict, Optional
 import logging
 
 from xbox.sg import enum
 from xbox.sg.console import Console
 from xbox.sg.manager import InputManager, TextManager, MediaManager
 from xbox.stump.manager import StumpManager
+from xbox.stump import json_model as stump_schemas
+
+from . import schemas
 
 log = logging.getLogger()
 
 
 class ConsoleWrap(object):
-    def __init__(self, console):
+    def __init__(self, console: Console):
         self.console = console
 
         if 'input' not in self.console.managers:
@@ -26,13 +30,15 @@ class ConsoleWrap(object):
         return await Console.discover(*args, **kwargs)
 
     @staticmethod
-    async def power_on(liveid, addr=None, iterations=3, tries=10):
+    async def power_on(
+        liveid: str, addr: str = None, iterations: int = 3, tries: int = 10
+    ) -> None:
         for i in range(iterations):
             await Console.power_on(liveid, addr=addr, tries=tries)
             await Console.wait(1)
 
     @property
-    def media_commands(self):
+    def media_commands(self) -> Dict[str, enum.MediaControlCommand]:
         return {
             'play': enum.MediaControlCommand.Play,
             'pause': enum.MediaControlCommand.Pause,
@@ -52,7 +58,7 @@ class ConsoleWrap(object):
         }
 
     @property
-    def input_keys(self):
+    def input_keys(self) -> Dict[str, enum.GamePadButton]:
         return {
             'clear': enum.GamePadButton.Clear,
             'enroll': enum.GamePadButton.Enroll,
@@ -74,64 +80,64 @@ class ConsoleWrap(object):
         }
 
     @property
-    def liveid(self):
+    def liveid(self) -> str:
         return self.console.liveid
 
     @property
-    def last_error(self):
+    def last_error(self) -> int:
         return self.console.last_error
 
     @property
-    def available(self):
+    def available(self) -> bool:
         return bool(self.console and self.console.available)
 
     @property
-    def connected(self):
+    def connected(self) -> bool:
         return bool(self.console and self.console.connected)
 
     @property
-    def usable(self):
+    def usable(self) -> bool:
         return bool(self.console and self.connected)
 
     @property
-    def connection_state(self):
+    def connection_state(self) -> enum.ConnectionState:
         if not self.console:
             return enum.ConnectionState.Disconnected
 
         return self.console.connection_state
 
     @property
-    def pairing_state(self):
+    def pairing_state(self) -> enum.PairedIdentityState:
         if not self.console:
             return enum.PairedIdentityState.NotPaired
 
         return self.console.pairing_state
 
     @property
-    def device_status(self):
+    def device_status(self) -> enum.DeviceStatus:
         if not self.console:
             return enum.DeviceStatus.Unavailable
 
         return self.console.device_status
 
     @property
-    def authenticated_users_allowed(self):
+    def authenticated_users_allowed(self) -> bool:
         return bool(self.console and self.console.authenticated_users_allowed)
 
     @property
-    def console_users_allowed(self):
+    def console_users_allowed(self) -> bool:
         return bool(self.console and self.console.console_users_allowed)
 
     @property
-    def anonymous_connection_allowed(self):
+    def anonymous_connection_allowed(self) -> bool:
         return bool(self.console and self.console.anonymous_connection_allowed)
 
     @property
-    def is_certificate_pending(self):
+    def is_certificate_pending(self) -> bool:
         return bool(self.console and self.console.is_certificate_pending)
 
     @property
-    def console_status(self):
+    def console_status(self) -> schemas.ConsoleStatusResponse:
         status_json = {}
 
         if not self.console or not self.console.console_status:
@@ -139,6 +145,7 @@ class ConsoleWrap(object):
 
         status = self.console.console_status
         kernel_version = '{0}.{1}.{2}'.format(status.major_version, status.minor_version, status.build_number)
+
 
         status_json.update({
             'live_tv_provider': status.live_tv_provider,
@@ -162,10 +169,10 @@ class ConsoleWrap(object):
             active_titles.append(title)
 
         status_json.update({'active_titles': active_titles})
-        return status_json
+        return schemas.ConsoleStatusResponse(**status_json)
 
     @property
-    def media_status(self):
+    def media_status(self) -> schemas.MediaStateResponse:
         if not self.usable or not self.console.media or not self.console.media.media_state:
             return None
 
@@ -197,10 +204,10 @@ class ConsoleWrap(object):
             metadata[meta.name] = meta.value
 
         media_state_json['metadata'] = metadata
-        return media_state_json
+        return schemas.MediaStateResponse(**media_state_json)
 
     @property
-    def status(self):
+    def status(self) -> schemas.DeviceStatusResponse:
         data = self.console.to_dict()
         data.update({
             'connection_state': self.connection_state.name,
@@ -213,34 +220,36 @@ class ConsoleWrap(object):
             'is_certificate_pending': self.is_certificate_pending
         })
 
-        return data
+        return schemas.DeviceStatusResponse(**data)
 
     @property
-    def stump_config(self):
+    def stump_config(self) -> stump_schemas.Configuration:
         if self.usable:
             return self.console.stump.request_stump_configuration()
 
     @property
-    def headend_info(self):
+    def headend_info(self) -> stump_schemas.HeadendInfo:
         if self.usable:
             return self.console.stump.request_headend_info()
 
     @property
-    def livetv_info(self):
+    def livetv_info(self) -> stump_schemas.LiveTvInfo:
         if self.usable:
             return self.console.stump.request_live_tv_info()
 
     @property
-    def tuner_lineups(self):
+    def tuner_lineups(self) -> stump_schemas.TunerLineups:
         if self.usable:
             return self.console.stump.request_tuner_lineups()
 
     @property
-    def text_active(self):
+    def text_active(self) -> bool:
         if self.usable:
             return self.console.text.got_active_session
 
-    async def connect(self, userhash=None, xtoken=None):
+    async def connect(
+        self, userhash: Optional[str] = None, xtoken: Optional[str] = None
+    ) -> enum.ConnectionState:
         if not self.console:
             return enum.ConnectionState.Disconnected
         elif self.console.connected:
@@ -257,36 +266,36 @@ class ConsoleWrap(object):
 
         return state
 
-    async def disconnect(self):
+    async def disconnect(self) -> bool:
         await self.console.disconnect()
         return True
 
-    async def power_off(self):
+    async def power_off(self) -> bool:
         await self.console.power_off()
         return True
 
-    async def launch_title(self, app_id):
+    async def launch_title(self, app_id: str) -> None:
         return await self.console.launch_title(app_id)
 
-    async def send_stump_key(self, device_id, button):
+    async def send_stump_key(self, device_id: str, button: str) -> bool:
         result = await self.console.send_stump_key(button, device_id)
         print(result)
         return True
 
-    async def send_media_command(self, command, seek_position=None):
+    async def send_media_command(self, command: str, seek_position: Optional[int] = None) -> bool:
         title_id = 0
         request_id = 0
         await self.console.media_command(title_id, command, request_id, seek_position)
         return True
 
-    async def send_gamepad_button(self, btn):
+    async def send_gamepad_button(self, btn: str) -> bool:
         await self.console.gamepad_input(btn)
         # Its important to clear button-press afterwards
         await self.console.wait(0.1)
         await self.console.gamepad_input(enum.GamePadButton.Clear)
         return True
 
-    async def send_text(self, text):
+    async def send_text(self, text: str) -> bool:
         if not self.text_active:
             return False
 
@@ -294,6 +303,6 @@ class ConsoleWrap(object):
         await self.console.finish_text_input()
         return True
 
-    async def dvr_record(self, start_delta, end_delta):
+    async def dvr_record(self, start_delta, end_delta) -> bool:
         await self.console.game_dvr_record(start_delta, end_delta)
         return True
