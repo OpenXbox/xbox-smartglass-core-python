@@ -1,7 +1,9 @@
 """
 JSON models for deserializing Stump messages
 """
-from marshmallow_objects import Model, NestedModel, fields
+from typing import List, Dict, Union, Optional
+from uuid import UUID
+from pydantic import BaseModel
 from xbox.stump.enum import Message
 
 
@@ -10,146 +12,146 @@ class StumpJsonError(Exception):
 
 
 # Root-level containers
-class StumpResponse(Model):
-    msgid = fields.Str()
-    response = fields.Str()
+class StumpResponse(BaseModel):
+    msgid: str
+    response: str
 
 
-class StumpError(Model):
-    msgid = fields.Str()
-    error = fields.Str()
+class StumpError(BaseModel):
+    msgid: str
+    error: str
 
 
-class StumpNotification(Model):
-    notification = fields.Str()
+class StumpNotification(BaseModel):
+    notification: str
 
 
 # Nested models
-class _FoundChannel(Model):
-    channelNumber = fields.Int()
-    displayName = fields.Str()
-    channelId = fields.Str()
+class _FoundChannel(BaseModel):
+    channelNumber: int
+    displayName: str
+    channelId: str
 
 
-class _LineupProvider(Model):
-    foundChannels = NestedModel(_FoundChannel, many=True, required=True)
-    cqsChannels = fields.List(fields.Str(), required=True)
-    headendId = fields.UUID()
+class _LineupProvider(BaseModel):
+    foundChannels: List[_FoundChannel]
+    cqsChannels: List[str]
+    headendId: UUID
 
 
-class _EnsureStreamingStarted(Model):
-    currentChannelId = fields.Str()
-    source = fields.Str()
-    streamingPort = fields.Int()
-    tunerChannelType = fields.Str()
-    userCanViewChannel = fields.Str()
+class _EnsureStreamingStarted(BaseModel):
+    currentChannelId: str
+    source: str
+    streamingPort: int
+    tunerChannelType: str
+    userCanViewChannel: str
 
 
-class _TunerLineups(Model):
-    providers = NestedModel(_LineupProvider, many=True)
+class _TunerLineups(BaseModel):
+    providers: List[_LineupProvider]
 
 
-class _RecentChannel(Model):
-    channelNum = fields.Str()  # Can be "NumberUnused" instead of int
-    providerId = fields.UUID()
-    channelId = fields.Str()
+class _RecentChannel(BaseModel):
+    channelNum: str  # Can be "NumberUnused" instead of int
+    providerId: UUID
+    channelId: str
 
 
-class _PauseBufferInfo(Model):
-    Enabled = fields.Bool()
-    IsDvr = fields.Bool()
-    MaxBufferSize = fields.Int()
-    BufferCurrent = fields.Int()
-    BufferStart = fields.Int()
-    BufferEnd = fields.Int()
-    CurrentTime = fields.Int()
-    Epoch = fields.Int()
+class _PauseBufferInfo(BaseModel):
+    Enabled: bool
+    IsDvr: bool
+    MaxBufferSize: int
+    BufferCurrent: int
+    BufferStart: int
+    BufferEnd: int
+    CurrentTime: int
+    Epoch: int
 
 
-class _LiveTvInfo(Model):
-    streamingPort = fields.Int()
-    inHdmiMode = fields.Bool()
-    tunerChannelType = fields.Str()
-    currentTunerChannelId = fields.Str()
-    currentHdmiChannelId = fields.Str()
-    pauseBufferInfo = NestedModel(_PauseBufferInfo)
+class _LiveTvInfo(BaseModel):
+    streamingPort: int
+    inHdmiMode: bool
+    tunerChannelType: str
+    currentTunerChannelId: str
+    currentHdmiChannelId: str
+    pauseBufferInfo: _PauseBufferInfo
 
 
-class _HeadendProvider(Model):
-    providerName = fields.Str()
-    filterPreference = fields.Str()
-    headendId = fields.UUID()
-    source = fields.Str()
-    titleId = fields.Str()
-    canStream = fields.Bool()
+class _HeadendProvider(BaseModel):
+    providerName: str
+    filterPreference: str
+    headendId: UUID
+    source: str
+    titleId: str
+    canStream: bool
 
 
-class _HeadendInfo(Model):
-    providerName = fields.Str()
-    headendId = fields.UUID()
-    blockExplicitContentPerShow = fields.Bool()
-    dvrEnabled = fields.Bool()
-    headendLocale = fields.Str()
-    streamingPort = fields.Int()
-    preferredProvider = fields.Str()
-    providers = NestedModel(_HeadendProvider, many=True)
+class _HeadendInfo(BaseModel):
+    providerName: str
+    headendId: UUID
+    blockExplicitContentPerShow: bool
+    dvrEnabled: bool
+    headendLocale: str
+    streamingPort: int
+    preferredProvider: str
+    providers: List[_HeadendProvider]
 
 
-class _DeviceConfiguration(Model):
-    device_id = fields.Str()
-    device_type = fields.Str()
-    device_brand = fields.Str()
-    device_model = fields.Str()
-    device_name = fields.Str()
-    buttons = fields.Dict()
+class _DeviceConfiguration(BaseModel):
+    device_id: str
+    device_type: str
+    device_brand: Optional[str]
+    device_model: Optional[str]
+    device_name: Optional[str]
+    buttons: Dict[str, str]
 
 
-class _AppChannel(Model):
-    name = fields.Str()
-    id = fields.Str()
+class _AppChannel(BaseModel):
+    name: str
+    id: str
 
 
-class _AppProvider(Model):
-    id = fields.Str()
-    providerName = fields.Str()
-    titleId = fields.Str()
-    primaryColor = fields.Str()
-    secondaryColor = fields.Str()
-    providerImageUrl = fields.Str()
-    channels = NestedModel(_AppChannel, many=True)
+class _AppProvider(BaseModel):
+    id: str
+    providerName: str
+    titleId: str
+    primaryColor: str
+    secondaryColor: str
+    providerImageUrl: Optional[str]
+    channels: List[_AppChannel]
 
 
 # Stump responses
 class AppChannelLineups(StumpResponse):
-    params = NestedModel(_AppProvider, many=True)
+    params: List[_AppProvider]
 
 
 class EnsureStreamingStarted(StumpResponse):
-    params = NestedModel(_EnsureStreamingStarted)
+    params: _EnsureStreamingStarted
 
 
 class TunerLineups(StumpResponse):
-    params = NestedModel(_TunerLineups)
+    params: _TunerLineups
 
 
 class SendKey(StumpResponse):
-    params = fields.Bool()
+    params: bool
 
 
 class RecentChannels(StumpResponse):
-    params = NestedModel(_RecentChannel, many=True)
+    params: List[_RecentChannel]
 
 
 class Configuration(StumpResponse):
-    params = NestedModel(_DeviceConfiguration, many=True)
+    params: List[_DeviceConfiguration]
 
 
 class LiveTvInfo(StumpResponse):
-    params = NestedModel(_LiveTvInfo)
+    params: _LiveTvInfo
 
 
 class HeadendInfo(StumpResponse):
-    params = NestedModel(_HeadendInfo)
+    params: _HeadendInfo
 
 
 response_map = {
@@ -169,7 +171,7 @@ response_map = {
 }
 
 
-def deserialize_stump_message(data):
+def deserialize_stump_message(data: dict) -> Union[StumpError, StumpNotification, StumpResponse]:
     """
     Helper for deserializing JSON stump messages
 
@@ -189,7 +191,7 @@ def deserialize_stump_message(data):
         if not issubclass(model, StumpResponse):
             raise StumpJsonError('Model not of subclass StumpResponse')
 
-        return model.load(data)
+        return model.parse_obj(data)
     elif notification:
         return StumpNotification.load(data)
     elif error:

@@ -6,7 +6,7 @@ from uuid import UUID
 from enum import Enum
 
 
-class Message(Enum):
+class Message(str, Enum):
     """
     Message types
     """
@@ -25,7 +25,7 @@ class Message(Enum):
     SET_CHANNEL = "SetChannel"
 
 
-class Notification(Enum):
+class Notification(str, Enum):
     """
     Notification types
     """
@@ -40,7 +40,7 @@ class Notification(Enum):
     TUNERSTATE_CHANGED = "TunerStateChanged"
 
 
-class Source(Enum):
+class Source(str, Enum):
     """
     Streamingsources
     """
@@ -48,7 +48,7 @@ class Source(Enum):
     TUNER = "tuner"
 
 
-class DeviceType(Enum):
+class DeviceType(str, Enum):
     """
     Devicetypes
     """
@@ -58,7 +58,7 @@ class DeviceType(Enum):
     AV_RECEIVER = "avr"
 
 
-class SourceHttpQuery(Enum):
+class SourceHttpQuery(str, Enum):
     """
     Source strings used in HTTP query
     """
@@ -70,7 +70,7 @@ class Input(object):
     HDMI = UUID("BA5EBA11-DEA1-4BAD-BA11-FEDDEADFAB1E")
 
 
-class Quality(Enum):
+class Quality(str, Enum):
     """
     Quality values
     """
@@ -80,7 +80,7 @@ class Quality(Enum):
     BEST = "best"
 
 
-class FilterType(Enum):
+class FilterType(str, Enum):
     """
     Channel-filter types
     """

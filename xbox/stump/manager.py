@@ -5,6 +5,8 @@ import random
 import logging
 import requests
 
+from typing import Union
+
 from xbox.sg.utils.events import Event
 from xbox.sg.enum import ServiceChannel
 from xbox.sg.manager import Manager
@@ -65,17 +67,16 @@ class StumpManager(Manager):
         self._msg_id_idx += 1
         return '{:08x}.{:d}'.format(self._msg_id_prefix, self._msg_id_idx)
 
-    def generate_stream_url(self, source, xuid=None, quality=Quality.BEST):
+    def generate_stream_url(self, source: Source, xuid: str = None, quality: Quality = Quality.BEST) -> str:
         """
         Generate TV Streaming URL (Dvb-USB tuner, not hdmi-in)
 
         Args:
-            source (:class:`Source`): Streaming source
-            xuid (str): optional, XUID
-            quality (:class:`Quality`): Streaming quality
+            source: Streaming source
+            xuid: optional, XUID
+            quality: Streaming quality
 
-        Returns:
-             str: HTTP URL
+        Returns: HTTP URL
         """
         src_map = {
             Source.HDMI: SourceHttpQuery.HDMI,
@@ -106,13 +107,13 @@ class StumpManager(Manager):
         r = requests.Request(method='GET', url=url, params=params).prepare()
         return r.url
 
-    def _on_json(self, data, channel):
+    def _on_json(self, data: dict, channel: int) -> None:
         """
         Internal handler for JSON messages received by the core protocol.
 
         Args:
-            data (dict): The JSON object that was received.
-            channel (int): The channel this message was received on.
+            data: The JSON object that was received.
+            channel: The channel this message was received on.
 
         Returns:
             None.
@@ -137,13 +138,13 @@ class StumpManager(Manager):
         else:
             log.warning("Unknown stump message: {}".format(data))
 
-    def _on_response(self, message_type, data):
+    def _on_response(self, message_type: Union[Message, str], data: json_model.StumpResponse) -> None:
         """
         Internal response handler. For logging purposes.
 
         Args:
-            message_type (str/Message): The message type.
-            data (`StumpResponse`): The raw message.
+            message_type: The message type.
+            data: The raw message.
         """
         if isinstance(message_type, str):
             message_type = Message(message_type)
@@ -176,13 +177,13 @@ class StumpManager(Manager):
         log.info("Received {} response".format(message_type))
         self.on_response(message_type, data)
 
-    def _on_notification(self, notification, data):
+    def _on_notification(self, notification: Union[Notification, str], data: json_model.StumpNotification) -> None:
         """
         Internal notification handler. For logging purposes.
 
         Args:
-            notification (str/Notification): The notification type.
-            data (`StumpNotification`): The raw message.
+            notification: The notification type.
+            data: The raw message.
         """
         if isinstance(notification, str):
             notification = Notification(notification)
@@ -190,20 +191,17 @@ class StumpManager(Manager):
         log.info("Received {} notification: {}".format(notification, data))
         self.on_notification(notification, data)
 
-    def _on_error(self, data):
+    def _on_error(self, data: json_model.StumpError) -> None:
         """
         Internal error handler.
 
         Args:
-            data (`StumpError`): The error dictionary from the Message.
-
-        Returns:
-            None.
+            data: The error dictionary from the Message.
         """
         log.error("Error: {}".format(data))
         self.on_error(data)
 
-    def _send_stump_message(self, name, params=None, msgid=None, timeout=3):
+    async def _send_stump_message(self, name, params=None, msgid=None, timeout=3):
         """
         Internal method for sending JSON messages over the core protocol.
 
@@ -222,15 +220,15 @@ class StumpManager(Manager):
             msgid = self.msg_id
 
         msg = dict(msgid=msgid, request=name.value, params=params)
-        self._send_json(msg)
+        await self._send_json(msg)
 
-        result = self.console.protocol._await_ack(msgid, timeout)
+        result = await self.console.protocol._await_ack(msgid, timeout)
         if not result:
             raise StumpException("Message \'{}\': \'{}\' got no response!".format(msgid, name))
 
         return result
 
-    def request_stump_configuration(self):
+    async def request_stump_configuration(self) -> dict:
         """
         Request device configuration from console.
 
@@ -240,69 +238,63 @@ class StumpManager(Manager):
         Returns:
             dict: The received result.
         """
-        return self._send_stump_message(Message.CONFIGURATION)
+        return await self._send_stump_message(Message.CONFIGURATION)
 
-    def request_headend_info(self):
+    async def request_headend_info(self) -> dict:
         """
         Request available headend information from console.
 
-        Returns:
-            dict: The received result.
+        Returns: The received result.
         """
-        return self._send_stump_message(Message.HEADEND_INFO)
+        return await self._send_stump_message(Message.HEADEND_INFO)
 
-    def request_live_tv_info(self):
+    async def request_live_tv_info(self) -> dict:
         """
         Request LiveTV information from console.
 
         Holds information about currently tuned channel, streaming-port etc.
 
-        Returns:
-            dict: The received result.
+        Returns: The received result.
         """
-        return self._send_stump_message(Message.LIVETV_INFO)
+        return await self._send_stump_message(Message.LIVETV_INFO)
 
-    def request_program_info(self):
+    async def request_program_info(self) -> dict:
         """
         Request program information.
 
         NOTE: Not working?!
 
-        Returns:
-            dict: The received result.
+        Returns: The received result.
         """
-        return self._send_stump_message(Message.PROGRAMM_INFO)
+        return await self._send_stump_message(Message.PROGRAMM_INFO)
 
-    def request_tuner_lineups(self):
+    async def request_tuner_lineups(self) -> dict:
         """
         Request Tuner Lineups from console.
 
         Tuner lineups hold information about scanned / found channels.
 
-        Returns:
-            dict: The received result.
+        Returns: The received result.
         """
-        return self._send_stump_message(Message.TUNER_LINEUPS)
+        return await self._send_stump_message(Message.TUNER_LINEUPS)
 
-    def request_app_channel_lineups(self):
+    async def request_app_channel_lineups(self) -> dict:
         """
         Request AppChannel Lineups.
 
-        Returns:
-            dict: The received result.
+        Returns: The received result.
         """
-        return self._send_stump_message(Message.APPCHANNEL_LINEUPS)
+        return await self._send_stump_message(Message.APPCHANNEL_LINEUPS)
 
-    def request_app_channel_data(self, provider_id, channel_id):
+    async def request_app_channel_data(self, provider_id: str, channel_id: str) -> dict:
         """
         Request AppChannel Data.
 
         Args:
-            provider_id (str): Provider ID.
-            channel_id (str): Channel ID.
+            provider_id: Provider ID.
+            channel_id: Channel ID.
 
-        Returns:
-            dict: The received result.
+        Returns: The received result.
         """
         return self._send_stump_message(
             Message.APPCHANNEL_DATA,
@@ -313,18 +305,17 @@ class StumpManager(Manager):
             }
         )
 
-    def request_app_channel_program_data(self, provider_id, program_id):
+    async def request_app_channel_program_data(self, provider_id: str, program_id: str) -> dict:
         """
         Request AppChannel Program Data.
 
         Args:
-            provider_id (str): Provider ID.
-            program_id (str): Program Id.
+            provider_id: Provider ID.
+            program_id: Program Id.
 
-        Returns:
-            dict: The received result.
+        Returns: The received result.
         """
-        return self._send_stump_message(
+        return await self._send_stump_message(
             Message.APPCHANNEL_PROGRAM_DATA,
             params={
                 'providerId': provider_id,
@@ -332,18 +323,17 @@ class StumpManager(Manager):
             }
         )
 
-    def set_stump_channel_by_id(self, channel_id, lineup_id):
+    async def set_stump_channel_by_id(self, channel_id: str, lineup_id: str) -> dict:
         """
         Switch to channel by providing channel ID and lineup ID.
 
         Args:
-            channel_id (str): Channel ID.
-            lineup_id (str): Lineup ID.
+            channel_id: Channel ID.
+            lineup_id: Lineup ID.
 
-        Returns:
-            dict: The received result.
+        Returns: The received result.
         """
-        return self._send_stump_message(
+        return await self._send_stump_message(
             Message.SET_CHANNEL,
             params={
                 'channelId': channel_id,
@@ -351,35 +341,33 @@ class StumpManager(Manager):
             }
         )
 
-    def set_stump_channel_by_name(self, channel_name):
+    async def set_stump_channel_by_name(self, channel_name: str) -> dict:
         """
         Switch to channel by providing channel name.
 
         Args:
-            channel_name (str): Channel name to switch to.
+            channel_name: Channel name to switch to.
 
-        Returns:
-            dict: The received result.
+        Returns: The received result.
         """
-        return self._send_stump_message(
+        return await self._send_stump_message(
             Message.SET_CHANNEL,
             params={
                 'channel_name': channel_name
             }
         )
 
-    def request_recent_channels(self, first, count):
+    async def request_recent_channels(self, first: int, count: int) -> dict:
         """
         Request a list of recently watched channels.
 
         Args:
-            first (int): Where to start enumeration.
-            count (int): Number of channels to request.
+            first: Where to start enumeration.
+            count: Number of channels to request.
 
-        Returns:
-            dict: The received result.
+        Returns: The received result.
         """
-        return self._send_stump_message(
+        return await self._send_stump_message(
             Message.RECENT_CHANNELS,
             params={
                 'startindex': first,
@@ -387,17 +375,16 @@ class StumpManager(Manager):
             }
         )
 
-    def send_stump_key(self, button, device_id=None, **kwargs):
+    async def send_stump_key(self, button: str, device_id: str = None, **kwargs) -> dict:
         """
         Send a remote control button to configured device via \
         Xbox's IR Blaster / Kinect / whatev.
 
         Args:
-            button (str): Button to send.
-            device_id (str, int): Device ID of device to control.
+            button: Button to send.
+            device_id: Device ID of device to control.
 
-        Returns:
-            dict: The received result.
+        Returns: The received result.
         """
         params = dict(button_id=button)
 
@@ -407,26 +394,24 @@ class StumpManager(Manager):
         if kwargs:
             params.update(**kwargs)
 
-        return self._send_stump_message(
+        return await self._send_stump_message(
             Message.SEND_KEY,
             params=params
         )
 
-    def request_ensure_stump_streaming_started(self, source):
+    async def request_ensure_stump_streaming_started(self, source: Source) -> dict:
         """
         Ensure that streaming started on desired tuner type
 
         Args:
-            source (str): Tuner Source to check for.
-                          Member of :class:`Source`
+            source: Tuner Source to check for.
 
-        Returns:
-            dict: The received result.
+        Returns: The received result.
         """
-        return self._send_stump_message(
+        return await self._send_stump_message(
             Message.ENSURE_STREAMING_STARTED,
             params={
-                'source': source
+                'source': source.value
             }
         )
 

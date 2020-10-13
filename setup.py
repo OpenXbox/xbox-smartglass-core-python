@@ -34,7 +34,7 @@ setup(
         'construct==2.10.56',
         'cryptography==3.1.1',
         'dpkt==1.9.4',
-        'marshmallow-objects==2.3.0',
+        'pydantic==1.6.1',
         'aioconsole==0.3.0',
         'quart==0.6.15'
     ],
