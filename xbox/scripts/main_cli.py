@@ -337,7 +337,7 @@ async def cli_discover_consoles(args: argparse.Namespace) -> List[Console]:
     return discovered
 
 
-async def main_async(command: Commands = None) -> ExitCodes:
+async def main_async(loop: asyncio.AbstractEventLoop, command: Commands = None) -> ExitCodes:
     """
     Async Main entrypoint
 
@@ -348,8 +348,6 @@ async def main_async(command: Commands = None) -> ExitCodes:
          None
     """
     auth_manager: AuthenticationManager = None
-
-    eventloop = asyncio.get_running_loop()
 
     if command:
         # Take passed command and append actual cmdline
@@ -405,7 +403,7 @@ async def main_async(command: Commands = None) -> ExitCodes:
             LOGGER.debug('Removing StreamHandler {0} from root logger'.format(h))
             logging.root.removeHandler(h)
 
-        await tui.run_tui(eventloop, args.consoles, auth_manager)
+        await tui.run_tui(loop, args.consoles, auth_manager)
         return ExitCodes.OK
 
     elif command == Commands.PowerOn:
@@ -521,7 +519,7 @@ async def main_async(command: Commands = None) -> ExitCodes:
 
         if command == Commands.REPL:
             LOGGER.info('Starting up local REPL console')
-            console = aioconsole.AsynchronousConsole(locals=scope_vars, loop=eventloop)
+            console = aioconsole.AsynchronousConsole(locals=scope_vars, loop=loop)
             await console.interact(banner)
 
         else:
@@ -530,7 +528,7 @@ async def main_async(command: Commands = None) -> ExitCodes:
             LOGGER.info(startinfo)
 
             server = await aioconsole.start_interactive_server(
-                host=args.bind, port=args.port, loop=eventloop)
+                host=args.bind, port=args.port, loop=loop)
             await server
 
     elif command == Commands.FalloutRelay:
@@ -566,7 +564,7 @@ def main(command: Commands = None):
     LOGGER.debug('Entering main_async')
     try:
         loop = asyncio.get_event_loop()
-        loop.run_until_complete(main_async(command))
+        loop.run_until_complete(main_async(loop, command))
     except KeyboardInterrupt:
         pass
 
