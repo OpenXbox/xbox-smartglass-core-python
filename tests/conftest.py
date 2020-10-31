@@ -73,7 +73,7 @@ def console(console_address, console_name, uuid_dummy, console_liveid, console_f
     c = Crypto.from_bytes(public_key_bytes)
     console = Console(
         console_address, console_name, uuid_dummy,
-        console_liveid, console_flags, c.foreign_pubkey
+        console_liveid, console_flags, 0, c.foreign_pubkey
     )
     console.add_manager(StumpManager)
     console.add_manager(MediaManager)
