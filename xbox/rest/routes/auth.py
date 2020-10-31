@@ -15,6 +15,7 @@ from xbox.webapi.scripts import CLIENT_ID, CLIENT_SECRET
 
 router = APIRouter()
 
+
 @router.get('/', response_model=AuthenticationStatus)
 def authentication_overview():
     if not singletons.authentication_manager:
@@ -55,7 +56,7 @@ async def xboxlive_login(
     return RedirectResponse(authorization_url)
 
 
-@router.get('/callback', response_model=AuthenticationStatus)
+@router.get('/callback', status_code=status.HTTP_307_TEMPORARY_REDIRECT)
 async def xboxlive_login_callback(
     code: str,
     state: str,
@@ -80,10 +81,11 @@ async def xboxlive_login_callback(
     # Construct authentication manager that will be cached
     async with aiohttp.ClientSession() as http_session:
         auth_mgr = generate_authentication_manager(auth_session_config, http_session)
-        await auth_mgr.request_oauth_token(code)
+        await auth_mgr.request_tokens(code)
     
     singletons.authentication_manager = auth_mgr
-    return generate_authentication_status(auth_mgr)
+    return RedirectResponse(url='/auth')
+
 
 @router.get('/logout', response_model=GeneralResponse)
 async def xboxlive_logout():
