@@ -16,22 +16,19 @@ Example:
         from xbox.sg.console import Console
         from xbox.sg.enum import ConnectionState
 
-        discovered = Console.discover(timeout=1)
+        discovered = await Console.discover(timeout=1)
         if len(discovered):
             console = discovered[0]
-            console.connect()
+            await console.connect()
             if console.connection_state != ConnectionState.Connected:
                 print("Connection failed")
                 sys.exit(1)
-            console.wait(1)
-
-            try:
-                console.protocol.serve_forever()
-            except KeyboardInterrupt:
-                pass
+            await console.wait(1)
         else:
             print("No consoles discovered")
             sys.exit(1)
+
+        ... do stuff ...
 """
 
 import asyncio

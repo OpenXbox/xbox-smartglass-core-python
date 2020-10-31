@@ -3,6 +3,7 @@
 ## 2.0.0 (2020-xx-xx)
 
 * Drop Python 3.6 support
+* Deprecate Authentication via TUI
 * Major rewrite (Migration from gevent -> asyncio)
 * Rewrite of REST Server (Migration FLASK -> FastAPI)
 * Adjust to xbox-webapi-python v2.0.8

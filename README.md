@@ -23,12 +23,15 @@ For in-depth information, check out the documentation: <https://openxbox.org/sma
 * Trigger GameDVR remotely
 * REST Server
 
-## Frameworks used
+## Major frameworks used
 
+* Xbox WebAPI <https://github.com/OpenXbox/xbox-webapi-python>
 * construct - Binary parsing <https://construct.readthedocs.io/>
 * cryptography - cryptography magic <https://cryptography.io/en/stable/>
 * dpkt - pcap parsing <https://dpkt.readthedocs.io/en/latest/>
-* Quart - REST API <https://pypi.org/project/quart/>
+* FastAPI - REST API <https://github.com/tiangolo/fastapi>
+* urwid - TUI app <https://github.com/urwid/urwid>
+* pydantic - JSON models <https://github.com/samuelcolvin/pydantic>
 
 ## Install
 
@@ -56,9 +59,6 @@ To authenticate / get authentication tokens use::
 
 ```text
 xbox-authenticate
-
-# Alternative: Use the ncurses terminal ui, it has authentication integrated
-xbox-tui
 ```
 
 ## REST server
@@ -67,22 +67,15 @@ xbox-tui
 
 Usage information
 
-```bash
-usage: xbox-rest-server rest [-h] [--logfile LOGFILE] [-v] [--bind BIND] [--port PORT]
-
-optional arguments:
-  -h, --help            show this help message and exit
-  --logfile LOGFILE     Path for logfile
-  -v, --verbose         Set logging level ( -v: INFO, -vv: DEBUG, -vvv: DEBUG_INCL_PACKETS)
-  --bind BIND, -b BIND  Interface address to bind the server
-  --port PORT, -p PORT  Port to bind to, defaults: (REST: 5557, REPL: 5558)
-```
-
 Example localhost:
 
 ```sh
 # Serve on '127.0.0.1:5557'
 $ xbox-rest-server
+INFO:     Started server process [927195]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://127.0.0.1:5557 (Press CTRL+C to quit)
 ```
 
 Example local network:
@@ -90,7 +83,11 @@ Example local network:
  __192.168.0.100__ is the IP address of your computer running the server:
 
 ```sh
-xbox-rest-server --bind 192.168.0.100 -p 1234
+xbox-rest-server --host 192.168.0.100 -p 1234
+INFO:     Started server process [927195]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://192.168.0.100:1234 (Press CTRL+C to quit)
 ```
 
 ### REST API
@@ -99,6 +96,14 @@ Since the migration from Flask framework to FastAPI, there is a nice
 OpenAPI documentation available:
 
 <http://{IPAddress}:{port}/docs>
+
+### Authentication
+
+If your server runs on something else than 127.0.0.1:5557 or 127.0.0.1:8080 you
+need to register your own OAUTH application on **Azure AD** and supply appropriate
+parameters to the login-endpoint of the REST server.
+
+Check out: <https://github.com/OpenXbox/xbox-webapi-python/blob/master/README.md>
 
 ## Fallout 4 relay service
 
