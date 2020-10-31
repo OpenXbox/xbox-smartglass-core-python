@@ -1,7 +1,7 @@
 from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, status
-from ..deps import require_xbl_client
+from ..deps import get_xbl_client
 
 from xbox.webapi.api.client import XboxLiveClient
 from xbox.webapi.api.provider.titlehub import models as titlehub_models
@@ -11,7 +11,7 @@ router = APIRouter()
 
 @router.get('/title/{title_id}', response_model=titlehub_models.Title)
 async def download_title_info(
-    client: XboxLiveClient = Depends(require_xbl_client),
+    client: XboxLiveClient = Depends(get_xbl_client),
     *,
     title_id: int
 ):
@@ -31,7 +31,7 @@ async def download_title_info(
 
 @router.get('/titlehistory', response_model=titlehub_models.TitleHubResponse)
 async def download_title_history(
-    client: XboxLiveClient = Depends(require_xbl_client),
+    client: XboxLiveClient = Depends(get_xbl_client),
     max_items: Optional[int] = 5
 ):
     try:
@@ -43,7 +43,7 @@ async def download_title_history(
 
 @router.get('/pins', response_model=lists_models.ListsResponse)
 async def download_pins(
-    client: XboxLiveClient = Depends(require_xbl_client)
+    client: XboxLiveClient = Depends(get_xbl_client)
 ):
     try:
         resp = await client.lists.get_items(client.xuid, {})

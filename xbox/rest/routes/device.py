@@ -1,5 +1,5 @@
-from typing import Optional
-from xbox.rest.schemas.auth import AuthenticationStatus, auth
+from typing import Optional, List
+from xbox.rest.schemas.auth import AuthenticationStatus
 
 from fastapi import APIRouter, Depends, HTTPException
 from http import HTTPStatus
@@ -15,7 +15,7 @@ from ..consolewrap import ConsoleWrap
 
 router = APIRouter()
 
-@router.get('/', response_model=schemas.DeviceOverviewResponse)
+@router.get('/', response_model=List[schemas.DeviceStatusResponse])
 async def device_overview(addr: Optional[str] = None):
     discovered = await ConsoleWrap.discover(addr=addr)
     discovered = discovered.copy()
@@ -39,9 +39,9 @@ async def device_overview(addr: Optional[str] = None):
         singletons.console_cache.update({d.liveid: ConsoleWrap(d)})
 
     # Filter for specific console when ip address query is supplied (if available)
-    data = {console.liveid: console.status for console in singletons.console_cache.values()
-            if (addr and console.status.get('address') == addr) or not addr}
-    return schemas.DeviceOverviewResponse(devices=data)
+    consoles = [console.status for console in singletons.console_cache.values()
+            if (addr and console.status.get('address') == addr) or not addr]
+    return consoles
 
 
 @router.get('/{liveid}/poweron', response_model=schemas.GeneralResponse)

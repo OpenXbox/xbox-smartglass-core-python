@@ -2,7 +2,6 @@ from .root import IndexResponse
 from .general import GeneralResponse
 
 from .device import (
-    DeviceOverviewResponse,
     ConsoleStatusResponse,
     DeviceStatusResponse,
     MediaStateResponse,

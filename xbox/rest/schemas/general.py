@@ -3,4 +3,4 @@ from pydantic import BaseModel
 
 class GeneralResponse(BaseModel):
     success: bool
-    details: Dict[str, str]
+    details: Optional[Dict[str, str]]

@@ -8,14 +8,15 @@ import json
 import urwid
 import logging
 import asyncio
+from typing import List, Optional
 from binascii import hexlify
 
-from xbox.webapi.scripts.tui import WebAPIDisplay
+from ..scripts import ExitCodes
+from ..sg.console import Console
+from ..sg.enum import DeviceStatus, GamePadButton, MediaPlaybackStatus
+from ..sg.manager import InputManager, TextManager, MediaManager
 
-from xbox.scripts import ExitCodes
-from xbox.sg.console import Console
-from xbox.sg.enum import DeviceStatus, GamePadButton, MediaPlaybackStatus
-from xbox.sg.manager import InputManager, TextManager, MediaManager
+from xbox.webapi.authentication.manager import AuthenticationManager
 
 from construct.lib import containers
 containers.setGlobalPrintFullStrings(True)
@@ -232,9 +233,16 @@ class ConsoleButton(urwid.Button):
             self.app.view_msgbox('Console unavailable, try refreshing')
             return False
 
+        userhash = ''
+        xsts_token = ''
+
+        if self.app.auth_mgr:
+            userhash = self.app.auth_mgr.xsts_token.userhash
+            xsts_token = self.app.auth_mgr.xsts_token.token
+
         state = await self.console.connect(
-            userhash=self.app.auth_mgr.userinfo.userhash,
-            xsts_token=self.app.auth_mgr.xsts_token.jwt
+            userhash=userhash,
+            xsts_token=xsts_token
         )
 
         if not self.console.connected:
@@ -479,7 +487,7 @@ class SGDisplay(object):
     log_fmt = logging.Formatter(logging.BASIC_FORMAT)
     log_level = logging.DEBUG
 
-    def __init__(self, consoles, auth_mgr):
+    def __init__(self, consoles: List[Console], auth_mgr: AuthenticationManager):
         self.header = urwid.AttrMap(urwid.Text(self.header_text), 'header')
         footer = urwid.AttrMap(urwid.Text(self.footer_main_text), 'foot')
 
@@ -619,8 +627,7 @@ class SGDisplay(object):
         elif input in ('l', 'L'):
             self.view_log()
 
-
-def load_consoles(filepath):
+def load_consoles(filepath: str) -> List[Console]:
     try:
         with open(filepath, 'r') as fh:
             consoles = json.load(fh)
@@ -629,39 +636,30 @@ def load_consoles(filepath):
         return []
 
 
-def save_consoles(filepath, consoles):
+def save_consoles(filepath: str, consoles: List[Console]) -> None:
     consoles = [c.to_dict() for c in consoles]
     with open(filepath, 'w') as fh:
         json.dump(consoles, fh, indent=2)
 
 
-async def run_tui(loop, consoles_filepath, addr, liveid, tokens_filepath, do_refresh):
+async def run_tui(
+    loop: asyncio.AbstractEventLoop,
+    consoles_filepath: str,
+    auth_mgr: Optional[AuthenticationManager] = None
+) -> int:
     """
     Main entrypoint for TUI
 
     Args:
-        loop (AbstractEventLoop): Eventloop
-        consoles_filepath (str): Console json filepath
-        addr (str): IP address of console
-        liveid (str): LiveID to connect to
-        tokens_filepath (str): Tokens filepath
-        do_refresh (bool): Do token refresh
+        loop: Eventloop
+        consoles_filepath: Console json filepath
+        auth_mgr: Authentication manager
 
-    Returns:
-        ExitCodes (int): Exit code
+    Returns: Exit code
     """
-    consoles = []
-    if consoles_filepath:
-        consoles = load_consoles(consoles_filepath)
+    consoles = load_consoles(consoles_filepath) if consoles_filepath else []
 
-    app = WebAPIDisplay(tokens_filepath)
-    auth_success = app.run()
-
-    if not auth_success:
-        print('tui: Cannot continue without valid authentication data. bye!')
-        return ExitCodes.AuthenticationError
-
-    app = SGDisplay(consoles, app.auth_mgr)
+    app = SGDisplay(consoles, auth_mgr)
     await app.run(loop)
 
     if consoles_filepath:

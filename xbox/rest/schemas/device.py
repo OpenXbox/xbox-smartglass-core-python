@@ -1,11 +1,17 @@
 from typing import List, Dict, Optional
 from pydantic import BaseModel
 
-class Device(BaseModel):
+class DeviceStatusResponse(BaseModel):
     liveid: str
-
-class DeviceOverviewResponse(BaseModel):
-    devices: Dict[str, Device]
+    ip_address: str
+    connection_state: str
+    pairing_state: str
+    device_status: str
+    last_error: int
+    authenticated_users_allowed: bool
+    console_users_allowed: bool
+    anonymous_connection_allowed: bool
+    is_certificate_pending: bool
 
 class ActiveTitle(BaseModel):
     title_id: str
@@ -39,16 +45,6 @@ class MediaStateResponse(BaseModel):
     min_seek: int
     max_seek: int
     metadata: Optional[Dict[str, str]]
-
-class DeviceStatusResponse(BaseModel):
-    connection_state: str
-    pairing_state: str
-    device_status: str
-    last_error: int
-    authenticated_users_allowed: bool
-    console_users_allowed: bool
-    anonymous_connection_allowed: bool
-    is_certificate_pending: bool
 
 class TextSessionActiveResponse(BaseModel):
     text_session_active: bool

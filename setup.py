@@ -30,7 +30,7 @@ setup(
     ],
     test_suite="tests",
     install_requires=[
-        'xbox-webapi==2.0.7',
+        'xbox-webapi==2.0.8',
         'construct==2.10.56',
         'cryptography==3.1.1',
         'dpkt==1.9.4',
@@ -73,7 +73,7 @@ setup(
             'xbox-fo4-relay=xbox.scripts.main_cli:main_falloutrelay',
             'xbox-pcap=xbox.scripts.pcap:main',
             'xbox-recrypt=xbox.scripts.recrypt:main',
-            'xbox-rest-server=xbox.scripts.main_cli:main_rest'
+            'xbox-rest-server=xbox.scripts.rest_server:main'
         ]
     }
 )

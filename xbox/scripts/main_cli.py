@@ -4,14 +4,19 @@ Main smartglass client
 Common script that handles several subcommands
 See `Commands`
 """
+import os
 import sys
 import logging
 import argparse
 import functools
 import asyncio
 import aioconsole
+import aiohttp
 
+from typing import List
 from logging.handlers import RotatingFileHandler
+
+from xbox.webapi.authentication.models import OAuth2TokenResponse
 
 from xbox.scripts import TOKENS_FILE, CONSOLES_FILE, LOG_FMT, \
     LOG_LEVEL_DEBUG_INCL_PACKETS, VerboseFormatter, ExitCodes
@@ -19,6 +24,7 @@ from xbox.scripts import TOKENS_FILE, CONSOLES_FILE, LOG_FMT, \
 from xbox.handlers import tui, gamepad_input, text_input, fallout4_relay
 from xbox.auxiliary.manager import TitleManager
 
+from xbox.webapi.scripts import CLIENT_ID, CLIENT_SECRET, REDIRECT_URI
 from xbox.webapi.authentication.manager import AuthenticationManager
 from xbox.webapi.common.exceptions import AuthenticationException
 
@@ -26,13 +32,9 @@ from xbox.sg import manager
 from xbox.sg.console import Console
 from xbox.sg.enum import ConnectionState
 
-# REST server imports
-from xbox.rest.app import app as rest_app
-
 
 LOGGER = logging.getLogger(__name__)
 
-REST_DEFAULT_SERVER_PORT = 5557
 REPL_DEFAULT_SERVER_PORT = 5558
 
 
@@ -49,15 +51,16 @@ class Commands(object):
     GamepadInput = 'gamepadinput'
     TextInput = 'textinput'
     TUI = 'tui'
-    RESTServer = 'rest'
 
 
-def parse_arguments(args=None):
+def parse_arguments(args: List[str] = None):
     """
     Parse arguments with argparse.ArgumentParser
 
-    Returns:
-        Namespace: Parsed arguments
+    Args:
+        args: List of arguments from cmdline
+
+    Returns: Parsed arguments
 
     Raises:
         Exception: On generic failure
@@ -83,6 +86,24 @@ def parse_arguments(args=None):
         '--tokens', '-t', type=str, default=TOKENS_FILE,
         help='Tokenfile to load')
     xbl_token_args.add_argument(
+        "--client-id",
+        "-cid",
+        default=os.environ.get("CLIENT_ID", CLIENT_ID),
+        help="OAuth2 Client ID",
+    )
+    xbl_token_args.add_argument(
+        "--client-secret",
+        "-cs",
+        default=os.environ.get("CLIENT_SECRET", CLIENT_SECRET),
+        help="OAuth2 Client Secret",
+    )
+    xbl_token_args.add_argument(
+        "--redirect-uri",
+        "-ru",
+        default=os.environ.get("REDIRECT_URI", REDIRECT_URI),
+        help="OAuth2 Redirect URI",
+    )
+    xbl_token_args.add_argument(
         '--refresh', '-r', action='store_true',
         help="Refresh xbox live tokens in provided token file")
 
@@ -94,14 +115,6 @@ def parse_arguments(args=None):
     connection_arg.add_argument(
         '--liveid', '-l',
         help='LiveID to poweron')
-
-    server_args = argparse.ArgumentParser(add_help=False)
-    server_args.add_argument(
-        '--bind', '-b', default='127.0.0.1',
-        help='Interface address to bind the server')
-    server_args.add_argument(
-        '--port', '-p', type=int, default=0,
-        help='Port to bind to, defaults: (REST: 5557, REPL: 5558)')
 
     """Common argument for interactively choosing console to handle"""
     interactive_arg = argparse.ArgumentParser(add_help=False)
@@ -147,12 +160,17 @@ def parse_arguments(args=None):
                  interactive_arg, connection_arg])
 
     """REPL server"""
-    subparsers.add_parser(
+    repl_server_cmd = subparsers.add_parser(
         Commands.REPLServer,
         help='REPL server (interactive console)',
         parents=[logging_args, xbl_token_args,
-                 interactive_arg, connection_arg,
-                 server_args])
+                 interactive_arg, connection_arg])
+    repl_server_cmd.add_argument(
+        '--bind', '-b', default='127.0.0.1',
+        help='Interface address to bind the server')
+    repl_server_cmd.add_argument(
+        '--port', '-p', type=int, default=REPL_DEFAULT_SERVER_PORT,
+        help=f'Port to bind to, default: {REPL_DEFAULT_SERVER_PORT}')
 
     """Fallout relay"""
     subparsers.add_parser(
@@ -184,18 +202,10 @@ def parse_arguments(args=None):
         '--consoles', '-c', default=CONSOLES_FILE,
         help="Previously discovered consoles (json)")
 
-    """
-    REST server
-    """
-    subparsers.add_parser(
-        Commands.RESTServer,
-        help='REST server',
-        parents=[logging_args, xbl_token_args, server_args])
-
     return parser.parse_args(args)
 
 
-def handle_logging_setup(args):
+def handle_logging_setup(args: argparse.Namespace) -> None:
     """
     Determine log level, logfile and special DEBUG_INCL_PACKETS
     via cmdline arguments.
@@ -231,29 +241,45 @@ def handle_logging_setup(args):
         logging.root.addHandler(file_handler)
 
 
-def do_authentication(token_filepath, do_refresh):
+async def do_authentication(args: argparse.Namespace) -> AuthenticationManager:
     """
     Shortcut for doing xbox live authentication (uses xbox-webapi-python lib).
 
     Args:
-        token_filepath (str): Token filepath
-        do_refresh (bool): Whether to refresh tokens
+        args: Parsed arguments
 
-    Returns:
-        AuthenticationManager: An authenticated instance
+    Returns: An authenticated instance of AuthenticationManager
 
     Raises:
         AuthenticationException: If authentication failed
     """
-    auth_mgr = AuthenticationManager.from_file(token_filepath)
-    auth_mgr.authenticate(do_refresh=do_refresh)
-    if do_refresh:
-        auth_mgr.dump(token_filepath)
+    async with aiohttp.ClientSession() as session:
+        auth_mgr = AuthenticationManager(
+            session, args.client_id, args.client_secret, args.redirect_uri
+        )
+
+        # Refresh tokens if we have them
+        if os.path.exists(args.tokens):
+            with open(args.tokens, mode="r") as f:
+                tokens = f.read()
+            auth_mgr.oauth = OAuth2TokenResponse.parse_raw(tokens)
+            await auth_mgr.refresh_tokens()
+
+        # Request new ones if they are not valid
+        if not (auth_mgr.xsts_token and auth_mgr.xsts_token.is_valid()):
+            auth_url = auth_mgr.generate_authorization_url()
+            print(f'Authorize with following URL: {auth_url}\n')
+
+            code = input('Enter received authorization code: ')
+            await auth_mgr.request_tokens(code)
+
+        with open(args.tokens, mode="w") as f:
+            f.write(auth_mgr.oauth.json())
 
     return auth_mgr
 
 
-def choose_console_interactively(console_list):
+def choose_console_interactively(console_list: List[Console]):
     """
     Choose a console to use via user-input
 
@@ -285,7 +311,7 @@ def choose_console_interactively(console_list):
     return console_list[int(response)]
 
 
-async def cli_discover_consoles(args):
+async def cli_discover_consoles(args: argparse.Namespace) -> List[Console]:
     """
     Discover consoles
     """
@@ -311,7 +337,7 @@ async def cli_discover_consoles(args):
     return discovered
 
 
-async def main_async(command=None):
+async def main_async(command: Commands = None) -> ExitCodes:
     """
     Async Main entrypoint
 
@@ -321,7 +347,7 @@ async def main_async(command=None):
     Returns:
          None
     """
-    auth_manager = None
+    auth_manager: AuthenticationManager = None
 
     eventloop = asyncio.get_running_loop()
 
@@ -345,7 +371,7 @@ async def main_async(command=None):
         LOGGER.error('Flag \'--interactive\' is incompatible with'
                      ' providing an IP address (--address) or LiveID (--liveid) explicitly')
         sys.exit(ExitCodes.ArgParsingError)
-    elif command != Commands.RESTServer and args.liveid and args.address:
+    elif args.liveid and args.address:
         LOGGER.warning('You passed --address AND --liveid: Will only use that specific'
                        'combination!')
     elif command == Commands.PowerOff and args.all and (args.liveid or args.address):
@@ -357,22 +383,19 @@ async def main_async(command=None):
 
     print('Xbox SmartGlass main client started')
 
-    if command == Commands.RESTServer:
+    if 'tokens' in args:
         """
-        REST Server
+        Do Xbox live authentication
         """
+        LOGGER.debug('Command {0} supports authenticated connection'.format(command))
+        try:
+            auth_manager = await do_authentication(args)
+        except AuthenticationException:
+            LOGGER.exception('Authentication failed!')
+            LOGGER.error("Please re-run xbox-authenticate to get a fresh set")
+            sys.exit(ExitCodes.AuthenticationError)
 
-        if args.port == 0:
-            LOGGER.info('No defaults provided, '
-                        'Setting REST server port to {0}'.format(REST_DEFAULT_SERVER_PORT))
-            args.port = REST_DEFAULT_SERVER_PORT
-
-        print('Xbox Smartglass REST server started on {0}:{1}'.format(
-            args.bind, args.port
-        ))
-
-        await rest_app.run_task(args.bind, args.port)
-    elif command == Commands.TUI:
+    if command == Commands.TUI:
         """
         Text user interface (powered by urwid)
         """
@@ -382,21 +405,8 @@ async def main_async(command=None):
             LOGGER.debug('Removing StreamHandler {0} from root logger'.format(h))
             logging.root.removeHandler(h)
 
-        await tui.run_tui(eventloop, args.consoles, args.address,
-                          args.liveid, args.tokens, args.refresh)
-        return
-
-    elif 'tokens' in args:
-        """
-        Do Xbox live authentication
-        """
-        LOGGER.debug('Command {0} supports authenticated connection'.format(command))
-        try:
-            auth_manager = do_authentication(args.tokens, args.refresh)
-        except AuthenticationException:
-            LOGGER.exception('Authentication failed!')
-            LOGGER.error("Please re-run xbox-authenticate to get a fresh set")
-            sys.exit(ExitCodes.AuthenticationError)
+        await tui.run_tui(eventloop, args.consoles, auth_manager)
+        return ExitCodes.OK
 
     elif command == Commands.PowerOn:
         """
@@ -469,15 +479,21 @@ async def main_async(command=None):
     console.on_timeout += \
         lambda x: LOGGER.error('Timeout occured!') or sys.exit(1)
 
-    userhash = auth_manager.userinfo.userhash
-    xtoken = auth_manager.xsts_token
+    userhash = ''
+    xsts_token = ''
+    
+    if auth_manager:
+        userhash = auth_manager.xsts_token.userhash
+        xsts_token = auth_manager.xsts_token.token
 
-    LOGGER.debug('Authentication info:')
-    LOGGER.debug('Userhash: {0}'.format(userhash))
-    LOGGER.debug('XToken: {0}'.format(xtoken))
+        LOGGER.debug('Authentication info:')
+        LOGGER.debug('Userhash: {0}'.format(userhash))
+        LOGGER.debug('XToken: {0}'.format(xsts_token))
+    else:
+        LOGGER.info('Running in anonymous mode')
 
     LOGGER.info('Attempting connection...')
-    state = await console.connect(userhash, xtoken.jwt)
+    state = await console.connect(userhash, xsts_token)
     if state != ConnectionState.Connected:
         LOGGER.error('Connection failed! Console: {0}'.format(console))
         sys.exit(1)
@@ -495,8 +511,7 @@ async def main_async(command=None):
         await console.power_off()
         sys.exit(ExitCodes.OK)
 
-    elif command == Commands.REPL or \
-            command == Commands.REPLServer:
+    elif command == Commands.REPL or command == Commands.REPLServer:
         banner = 'You are connected to the console @ {0}\n'\
                  .format(console.address)
         banner += 'Type in \'console\' to acccess the object\n'
@@ -510,12 +525,6 @@ async def main_async(command=None):
             await console.interact(banner)
 
         else:
-
-            if args.port == 0:
-                LOGGER.info('No defaults provided, '
-                            'Setting REPL server port to {0}'.format(REPL_DEFAULT_SERVER_PORT))
-                args.port = REPL_DEFAULT_SERVER_PORT
-
             startinfo = 'Starting up REPL server @ {0}:{1}'.format(args.bind, args.port)
             print(startinfo)
             LOGGER.info(startinfo)
@@ -553,7 +562,7 @@ async def main_async(command=None):
         console.text.on_systemtext_done += text_input.on_text_done
 
 
-def main(command=None):
+def main(command: Commands = None):
     LOGGER.debug('Entering main_async')
     try:
         loop = asyncio.get_event_loop()
@@ -605,11 +614,6 @@ def main_gamepadinput():
 def main_tui():
     """Entrypoint for TUI script"""
     main(Commands.TUI)
-
-
-def main_rest():
-    """Entrypoint for REST server"""
-    main(Commands.RESTServer)
 
 
 if __name__ == '__main__':

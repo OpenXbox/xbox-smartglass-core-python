@@ -210,6 +210,8 @@ class ConsoleWrap(object):
     def status(self) -> schemas.DeviceStatusResponse:
         data = self.console.to_dict()
         data.update({
+            'liveid': self.console.liveid,
+            'ip_address': self.console.address,
             'connection_state': self.connection_state.name,
             'pairing_state': self.pairing_state.name,
             'device_status': self.device_status.name,

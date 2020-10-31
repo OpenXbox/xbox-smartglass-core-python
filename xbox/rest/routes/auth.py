@@ -14,7 +14,7 @@ from ..schemas.auth import AuthenticationStatus, AuthSessionConfig
 
 router = APIRouter()
 
-@router.get('/')
+@router.get('/', response_model=AuthenticationStatus)
 def authentication_overview():
     if not singletons.authentication_manager:
         raise HTTPException(status_code=404, detail='Authorization not done')

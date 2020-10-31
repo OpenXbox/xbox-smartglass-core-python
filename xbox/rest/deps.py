@@ -36,7 +36,7 @@ def get_xbl_client() -> Optional[XboxLiveClient]:
     )
 
 def get_authorization(
-    anonymous: Optional[bool] = Query()
+    anonymous: Optional[bool] = Query(default=False)
 ) -> Optional[AuthenticationStatus]:
     if anonymous:
         return None
