@@ -61,15 +61,44 @@ xbox-authenticate
 xbox-tui
 ```
 
-## REST Server
+## REST server
 
-Start the REST server
+### Start the server daemon
 
-```text
-xbox-rest-server
+Usage information
+
+```bash
+usage: xbox-rest-server rest [-h] [--logfile LOGFILE] [-v] [--bind BIND] [--port PORT]
+
+optional arguments:
+  -h, --help            show this help message and exit
+  --logfile LOGFILE     Path for logfile
+  -v, --verbose         Set logging level ( -v: INFO, -vv: DEBUG, -vvv: DEBUG_INCL_PACKETS)
+  --bind BIND, -b BIND  Interface address to bind the server
+  --port PORT, -p PORT  Port to bind to, defaults: (REST: 5557, REPL: 5558)
 ```
 
-For more information consult <https://github.com/OpenXbox/xbox-smartglass-core-python/blob/master/REST_FAQ.md>
+Example localhost:
+
+```sh
+# Serve on '127.0.0.1:5557'
+$ xbox-rest-server
+```
+
+Example local network:
+
+ __192.168.0.100__ is the IP address of your computer running the server:
+
+```sh
+xbox-rest-server --bind 192.168.0.100 -p 1234
+```
+
+### REST API
+
+Since the migration from Flask framework to FastAPI, there is a nice
+OpenAPI documentation available:
+
+<http://{IPAddress}:{port}/docs>
 
 ## Fallout 4 relay service
 
