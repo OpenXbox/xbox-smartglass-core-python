@@ -556,7 +556,8 @@ async def main_async(command=None):
 def main(command=None):
     LOGGER.debug('Entering main_async')
     try:
-        asyncio.run(main_async(command))
+        loop = asyncio.get_event_loop()
+        loop.run_until_complete(main_async(command))
     except KeyboardInterrupt:
         pass
 
