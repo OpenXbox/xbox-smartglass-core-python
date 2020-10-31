@@ -32,7 +32,7 @@ setup(
     install_requires=[
         'xbox-webapi==2.0.8',
         'construct==2.10.56',
-        'cryptography==3.1.1',
+        'cryptography==3.2',
         'dpkt==1.9.4',
         'pydantic==1.6.1',
         'aioconsole==0.3.0',
