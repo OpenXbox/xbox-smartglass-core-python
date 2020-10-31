@@ -87,6 +87,20 @@ async def xboxlive_login_callback(
     return RedirectResponse(url='/auth')
 
 
+@router.get('/refresh', status_code=status.HTTP_307_TEMPORARY_REDIRECT)
+async def refresh_tokens():
+    if not singletons.authentication_manager:
+        raise HTTPException(status_code=404, detail='Authorization not done')
+
+    async with aiohttp.ClientSession() as http_session:
+        singletons.authentication_manager.session = http_session
+        singletons.authentication_manager.oauth = await singletons.authentication_manager.refresh_oauth_token()
+        singletons.authentication_manager.user_token = await singletons.authentication_manager.request_user_token()
+        singletons.authentication_manager.xsts_token = await singletons.authentication_manager.request_xsts_token()
+
+    return RedirectResponse(url='/auth')
+
+
 @router.get('/logout', response_model=GeneralResponse)
 async def xboxlive_logout():
     singletons.authentication_manager = None
