@@ -2,7 +2,6 @@ from typing import Optional, List
 from xbox.rest.schemas.auth import AuthenticationStatus
 
 from fastapi import APIRouter, Depends, HTTPException
-from http import HTTPStatus
 
 from xbox.webapi.api.client import XboxLiveClient
 from xbox.sg import enum
@@ -76,12 +75,12 @@ async def force_connect(
 
         state = await console.connect(userhash, xtoken)
     except Exception as e:
-        raise HTTPException(status_code=400, detail=f'error: {str(e)}')
+        raise
 
     if state != enum.ConnectionState.Connected:
         raise HTTPException(status_code=400, detail='Connection failed')
 
-    return schemas.GeneralResponse(success=True, details={'connection_state': state})
+    return schemas.GeneralResponse(success=True, details={'connection_state': state.name})
 
 
 """
@@ -153,10 +152,10 @@ def media_status(
 
 
 @router.get('/{liveid}/ir', response_model=schemas.InfraredResponse)
-def infrared(
+async def infrared(
     console: ConsoleWrap = Depends(console_connected)
 ):
-    stump_config = console.stump_config
+    stump_config = await console.get_stump_config()
 
     devices = {}
     for device_config in stump_config.params:
@@ -176,16 +175,16 @@ def infrared(
             buttons=button_links
         )
 
-    return schemas.InfraredResponse(**devices)
+    return schemas.InfraredResponse(__root__=devices)
 
 
 @router.get('/{liveid}/ir/{device_id}', response_model=schemas.InfraredDevice)
-def infrared_available_keys(
+async def infrared_available_keys(
     console: ConsoleWrap = Depends(console_connected),
     *,
     device_id: str
 ):
-    stump_config = console.stump_config
+    stump_config = await console.get_stump_config()
     for device_config in stump_config.params:
         if device_config.device_id != device_id:
             continue
@@ -233,13 +232,16 @@ def media_overview(
 async def media_command(
     console: ConsoleWrap = Depends(console_connected),
     *,
-    command: str
+    command: str,
+    seek_position: Optional[int] = None
 ):
     cmd = console.media_commands.get(command)
     if not cmd:
         raise HTTPException(status_code=400, detail=f'Invalid command passed, command: {command}')
+    elif cmd == enum.MediaControlCommand.Seek and seek_position is None:
+        raise HTTPException(status_code=400, detail=f'Seek command requires seek_position argument')
 
-    await console.send_media_command(cmd)
+    await console.send_media_command(cmd, seek_position=seek_position)
     return schemas.GeneralResponse(success=True)
 
 
@@ -275,24 +277,24 @@ async def input_send_button(
 
 
 @router.get('/{liveid}/stump/headend', response_model=stump_schemas.HeadendInfo)
-def stump_headend_info(
+async def stump_headend_info(
     console: ConsoleWrap = Depends(console_connected)
 ):
-    return console.headend_info
+    return await console.get_headend_info()
 
 
 @router.get('/{liveid}/stump/livetv', response_model=stump_schemas.LiveTvInfo)
-def stump_livetv_info(
+async def stump_livetv_info(
     console: ConsoleWrap = Depends(console_connected)
 ):
-    return console.livetv_info
+    return await console.get_livetv_info()
 
 
 @router.get('/{liveid}/stump/tuner_lineups', response_model=stump_schemas.TunerLineups)
-def stump_tuner_lineups(
+async def stump_tuner_lineups(
     console: ConsoleWrap = Depends(console_connected)
 ):
-    return console.tuner_lineups
+    return await console.get_tuner_lineups()
 
 
 @router.get('/{liveid}/text', response_model=schemas.device.TextSessionActiveResponse)

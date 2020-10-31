@@ -225,32 +225,30 @@ class ConsoleWrap(object):
         return schemas.DeviceStatusResponse(**data)
 
     @property
-    def stump_config(self) -> stump_schemas.Configuration:
-        if self.usable:
-            return self.console.stump.request_stump_configuration()
-
-    @property
-    def headend_info(self) -> stump_schemas.HeadendInfo:
-        if self.usable:
-            return self.console.stump.request_headend_info()
-
-    @property
-    def livetv_info(self) -> stump_schemas.LiveTvInfo:
-        if self.usable:
-            return self.console.stump.request_live_tv_info()
-
-    @property
-    def tuner_lineups(self) -> stump_schemas.TunerLineups:
-        if self.usable:
-            return self.console.stump.request_tuner_lineups()
-
-    @property
     def text_active(self) -> bool:
         if self.usable:
             return self.console.text.got_active_session
 
+    async def get_stump_config(self) -> stump_schemas.Configuration:
+        if self.usable:
+            return await self.console.stump.request_stump_configuration()
+
+    async def get_headend_info(self) -> stump_schemas.HeadendInfo:
+        if self.usable:
+            return await self.console.stump.request_headend_info()
+
+    async def get_livetv_info(self) -> stump_schemas.LiveTvInfo:
+        if self.usable:
+            return await self.console.stump.request_live_tv_info()
+
+    async def get_tuner_lineups(self) -> stump_schemas.TunerLineups:
+        if self.usable:
+            return await self.console.stump.request_tuner_lineups()
+
     async def connect(
-        self, userhash: Optional[str] = None, xtoken: Optional[str] = None
+        self,
+        userhash: Optional[str] = None,
+        xtoken: Optional[str] = None
     ) -> enum.ConnectionState:
         if not self.console:
             return enum.ConnectionState.Disconnected

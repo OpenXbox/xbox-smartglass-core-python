@@ -2,6 +2,8 @@ import os
 import pytest
 import uuid
 import json
+from fastapi import FastAPI
+from fastapi.testclient import TestClient
 
 from binascii import unhexlify
 from construct import Container
@@ -155,8 +157,9 @@ def aux_crypto(decrypted_packets):
 
 @pytest.fixture
 def rest_client():
-    rest_app.config['TESTING'] = True
-    yield rest_app
+    app = FastAPI()
+    client = TestClient(app)
+    yield client
 
 
 @pytest.fixture(scope='session')
@@ -238,17 +241,3 @@ def console_status_with_media(active_media_title):
             active_media_title
         ]
     )
-
-
-@pytest.fixture
-def rest_client_connected_media_console_status(rest_client, console, media_state, console_status_with_media):
-    console._device_status = enum.DeviceStatus.Available
-    console._connection_state = enum.ConnectionState.Connected
-    console._pairing_state = enum.PairedIdentityState.Paired
-
-    console.media._media_state = media_state
-    console._console_status = console_status_with_media
-
-    console_wrap = ConsoleWrap(console)
-    rest_client.console_cache[console.liveid] = console_wrap
-    return rest_client

@@ -11,6 +11,7 @@ from ..common import generate_authentication_status, generate_authentication_man
 from ..schemas.general import GeneralResponse
 from ..schemas.auth import AuthenticationStatus, AuthSessionConfig
 
+from xbox.webapi.scripts import CLIENT_ID, CLIENT_SECRET
 
 router = APIRouter()
 
@@ -24,11 +25,14 @@ def authentication_overview():
 
 @router.get('/login', status_code=status.HTTP_307_TEMPORARY_REDIRECT)
 async def xboxlive_login(
-    client_id: str,
-    client_secret: Optional[str],
-    redirect_uri: str,
-    scopes: List[str]
+    client_id: str = CLIENT_ID,
+    client_secret: Optional[str] = CLIENT_SECRET,
+    redirect_uri: str = 'http://localhost:5557/auth/callback',
+    scopes: str = 'Xboxlive.signin,Xboxlive.offline_access'
 ):
+    if scopes:
+        scopes = scopes.split(',')
+
     auth_session_config = AuthSessionConfig(
         client_id=client_id,
         client_secret=client_secret,
@@ -54,8 +58,8 @@ async def xboxlive_login(
 @router.get('/callback', response_model=AuthenticationStatus)
 async def xboxlive_login_callback(
     code: str,
-    error: Optional[str],
-    state: Optional[str]
+    state: str,
+    error: Optional[str] = None
 ):
     if error:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=error)
@@ -76,12 +80,12 @@ async def xboxlive_login_callback(
     # Construct authentication manager that will be cached
     async with aiohttp.ClientSession() as http_session:
         auth_mgr = generate_authentication_manager(auth_session_config, http_session)
-        await auth_mgr.refresh_tokens()
+        await auth_mgr.request_oauth_token(code)
     
-    authentication_manager = auth_mgr
-    return generate_authentication_status(authentication_manager)
+    singletons.authentication_manager = auth_mgr
+    return generate_authentication_status(auth_mgr)
 
 @router.get('/logout', response_model=GeneralResponse)
 async def xboxlive_logout():
-    authentication_manager = None
+    singletons.authentication_manager = None
     return GeneralResponse(success=True)

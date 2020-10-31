@@ -1,6 +1,6 @@
 from typing import Optional
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, logger
 from ..deps import get_xbl_client
 
 from xbox.webapi.api.client import XboxLiveClient
@@ -16,7 +16,7 @@ async def download_title_info(
     title_id: int
 ):
     if not client:
-        raise HTTPException(status_code=status.HTTP_404_NOTFOUND, detail='Authorization not available')
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail='Authorization not available')
 
     try:
         resp = await client.titlehub.get_title_info(title_id, 'image')
@@ -34,9 +34,13 @@ async def download_title_history(
     client: XboxLiveClient = Depends(get_xbl_client),
     max_items: Optional[int] = 5
 ):
+    if not client:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail='Authorization not available')
+
     try:
+        logger.logger.warn(client.xuid)
         resp = await client.titlehub.get_title_history(client.xuid, max_items=max_items)
-        return resp
+        return resp.json()
     except Exception as e:
         return HTTPException(status_code=400, detail=f'Download of titlehistory failed, error: {e}')
 
@@ -45,6 +49,9 @@ async def download_title_history(
 async def download_pins(
     client: XboxLiveClient = Depends(get_xbl_client)
 ):
+    if not client:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail='Authorization not available')
+
     try:
         resp = await client.lists.get_items(client.xuid, {})
         return resp

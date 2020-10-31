@@ -17,8 +17,8 @@ class ActiveTitle(BaseModel):
     title_id: str
     aum: str
     name: str
-    image: str
-    type: str
+    image: Optional[str]
+    type: Optional[str]
     has_focus: bool
     title_location: str
     product_id: str
@@ -55,9 +55,9 @@ class InfraredButton(BaseModel):
 
 class InfraredDevice(BaseModel):
     device_type: str
-    device_brand: str
-    device_model: str
-    device_name: str
+    device_brand: Optional[str]
+    device_model: Optional[str]
+    device_name: Optional[str]
     device_id: str
     buttons: Dict[str, InfraredButton]
 

@@ -12,6 +12,11 @@ class StumpJsonError(Exception):
 
 
 # Root-level containers
+class StumpRequest(BaseModel):
+    msgid: str
+    request: str
+    params: Optional[dict]
+
 class StumpResponse(BaseModel):
     msgid: str
     response: str
@@ -69,12 +74,12 @@ class _PauseBufferInfo(BaseModel):
 
 
 class _LiveTvInfo(BaseModel):
-    streamingPort: int
+    streamingPort: Optional[int]
     inHdmiMode: bool
-    tunerChannelType: str
-    currentTunerChannelId: str
-    currentHdmiChannelId: str
-    pauseBufferInfo: _PauseBufferInfo
+    tunerChannelType: Optional[str]
+    currentTunerChannelId: Optional[str]
+    currentHdmiChannelId: Optional[str]
+    pauseBufferInfo: Optional[_PauseBufferInfo]
 
 
 class _HeadendProvider(BaseModel):
@@ -92,8 +97,8 @@ class _HeadendInfo(BaseModel):
     blockExplicitContentPerShow: bool
     dvrEnabled: bool
     headendLocale: str
-    streamingPort: int
-    preferredProvider: str
+    streamingPort: Optional[int]
+    preferredProvider: Optional[str]
     providers: List[_HeadendProvider]
 
 

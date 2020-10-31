@@ -219,8 +219,8 @@ class StumpManager(Manager):
         if not msgid:
             msgid = self.msg_id
 
-        msg = dict(msgid=msgid, request=name.value, params=params)
-        await self._send_json(msg)
+        msg = json_model.StumpRequest(msgid=msgid, request=name.value, params=params)
+        await self._send_json(msg.dict())
 
         result = await self.console.protocol._await_ack(msgid, timeout)
         if not result:

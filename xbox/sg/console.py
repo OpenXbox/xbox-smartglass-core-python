@@ -354,7 +354,7 @@ class Console(object):
             LOGGER.error('json: Protocol not ready')
             return
 
-        return await self.protocol.send_message(data, channel=channel)
+        return await self.protocol.json(data, channel=channel)
 
     async def _power_on(self, tries: int = 2) -> None:
         await Console.power_on(self.liveid, self.address, tries)

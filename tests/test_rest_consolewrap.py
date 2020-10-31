@@ -154,10 +154,6 @@ def test_console_status(console, console_status):
     console._console_status = console_status
     status = ConsoleWrap(console).console_status
     assert status is not None
-    assert 'live_tv_provider' in status
-    assert 'kernel_version' in status
-    assert 'locale' in status
-    assert 'active_titles' in status
 
 
 def test_media_status(console, media_state, console_status, console_status_with_media):
@@ -176,38 +172,11 @@ def test_media_status(console, media_state, console_status, console_status_with_
 
     console._console_status = console_status_with_media
     state = ConsoleWrap(console).media_status
-    assert 'title_id' in state
-    assert 'aum_id' in state
-    assert 'asset_id' in state
-    assert 'media_type' in state
-    assert 'sound_level' in state
-    assert 'enabled_commands' in state
-    assert 'playback_status' in state
-    assert 'rate' in state
-    assert 'position' in state
-    assert 'media_start' in state
-    assert 'media_end' in state
-    assert 'min_seek' in state
-    assert 'max_seek' in state
-    assert 'metadata' in state
 
 
 def test_status(console):
     status = ConsoleWrap(console).status
     assert status is not None
-
-    assert isinstance(status['address'], str)
-    assert isinstance(status['name'], str)
-    assert isinstance(status['uuid'], str)
-    assert isinstance(status['liveid'], str)
-
-    assert isinstance(status['connection_state'], str)
-    assert isinstance(status['pairing_state'], str)
-    assert isinstance(status['device_status'], str)
-    assert isinstance(status['authenticated_users_allowed'], bool)
-    assert isinstance(status['console_users_allowed'], bool)
-    assert isinstance(status['anonymous_connection_allowed'], bool)
-    assert isinstance(status['is_certificate_pending'], bool)
 
 
 @pytest.mark.asyncio
