@@ -137,7 +137,7 @@ class ConsoleWrap(object):
         return bool(self.console and self.console.is_certificate_pending)
 
     @property
-    def console_status(self) -> schemas.ConsoleStatusResponse:
+    def console_status(self) -> Optional[schemas.ConsoleStatusResponse]:
         status_json = {}
 
         if not self.console or not self.console.console_status:
@@ -145,7 +145,6 @@ class ConsoleWrap(object):
 
         status = self.console.console_status
         kernel_version = '{0}.{1}.{2}'.format(status.major_version, status.minor_version, status.build_number)
-
 
         status_json.update({
             'live_tv_provider': status.live_tv_provider,
@@ -172,7 +171,7 @@ class ConsoleWrap(object):
         return schemas.ConsoleStatusResponse(**status_json)
 
     @property
-    def media_status(self) -> schemas.MediaStateResponse:
+    def media_status(self) -> Optional[schemas.MediaStateResponse]:
         if not self.usable or not self.console.media or not self.console.media.media_state:
             return None
 
@@ -282,13 +281,13 @@ class ConsoleWrap(object):
         print(result)
         return True
 
-    async def send_media_command(self, command: str, seek_position: Optional[int] = None) -> bool:
+    async def send_media_command(self, command: enum.MediaControlCommand, seek_position: Optional[int] = None) -> bool:
         title_id = 0
         request_id = 0
         await self.console.media_command(title_id, command, request_id, seek_position)
         return True
 
-    async def send_gamepad_button(self, btn: str) -> bool:
+    async def send_gamepad_button(self, btn: enum.GamePadButton) -> bool:
         await self.console.gamepad_input(btn)
         # Its important to clear button-press afterwards
         await self.console.wait(0.1)

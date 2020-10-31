@@ -1,3 +1,4 @@
+import aiohttp
 from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, status, logger
@@ -18,15 +19,17 @@ async def download_title_info(
     if not client:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail='Authorization not available')
 
-    try:
-        resp = await client.titlehub.get_title_info(title_id, 'image')
-        return resp.titles[0]
-    except KeyError:
-        raise HTTPException(status_code=404, detail='Cannot find titles-node json response')
-    except IndexError:
-        raise HTTPException(status_code=404, detail='No info for requested title not found')
-    except Exception as e:
-        raise HTTPException(status_code=400, detail=f'Download of titleinfo failed, error: {e}')
+    async with aiohttp.ClientSession() as http_session:
+        client.session._auth_mgr.session = http_session
+        try:
+            resp = await client.titlehub.get_title_info(title_id, 'image')
+            return resp.titles[0]
+        except KeyError:
+            raise HTTPException(status_code=404, detail='Cannot find titles-node json response')
+        except IndexError:
+            raise HTTPException(status_code=404, detail='No info for requested title not found')
+        except Exception as e:
+            raise HTTPException(status_code=400, detail=f'Download of titleinfo failed, error: {e}')
 
 
 @router.get('/titlehistory', response_model=titlehub_models.TitleHubResponse)
@@ -37,12 +40,13 @@ async def download_title_history(
     if not client:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail='Authorization not available')
 
-    try:
-        logger.logger.warn(client.xuid)
-        resp = await client.titlehub.get_title_history(client.xuid, max_items=max_items)
-        return resp.json()
-    except Exception as e:
-        return HTTPException(status_code=400, detail=f'Download of titlehistory failed, error: {e}')
+    async with aiohttp.ClientSession() as http_session:
+        client.session._auth_mgr.session = http_session
+        try:
+            resp = await client.titlehub.get_title_history(client.xuid, max_items=max_items)
+            return resp.json()
+        except Exception as e:
+            return HTTPException(status_code=400, detail=f'Download of titlehistory failed, error: {e}')
 
 
 @router.get('/pins', response_model=lists_models.ListsResponse)
@@ -52,8 +56,10 @@ async def download_pins(
     if not client:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail='Authorization not available')
 
-    try:
-        resp = await client.lists.get_items(client.xuid, {})
-        return resp
-    except Exception as e:
-        return HTTPException(status_code=400, detail=f'Download of pins failed, error: {e}')
+    async with aiohttp.ClientSession() as http_session:
+        client.session._auth_mgr.session = http_session
+        try:
+            resp = await client.lists.get_items(client.xuid, {})
+            return resp
+        except Exception as e:
+            return HTTPException(status_code=400, detail=f'Download of pins failed, error: {e}')

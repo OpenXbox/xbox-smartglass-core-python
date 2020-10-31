@@ -1,5 +1,5 @@
 from typing import Tuple, Optional
-
+import aiohttp
 from fastapi import Query, Header, HTTPException, status
 from xbox.webapi.api.language import DefaultXboxLiveLanguages, XboxLiveLanguage
 
@@ -26,7 +26,8 @@ def console_exists(liveid: str):
 
     return console
 
-def get_xbl_client() -> Optional[XboxLiveClient]:
+
+async def get_xbl_client() -> Optional[XboxLiveClient]:
     if not singletons.authentication_manager:
         return None
 

@@ -1,3 +1,4 @@
+import aiohttp
 from typing import Optional, List
 from xbox.rest.schemas.auth import AuthenticationStatus
 
@@ -39,7 +40,7 @@ async def device_overview(addr: Optional[str] = None):
 
     # Filter for specific console when ip address query is supplied (if available)
     consoles = [console.status for console in singletons.console_cache.values()
-            if (addr and console.status.get('address') == addr) or not addr]
+            if (addr and console.status.ip_address == addr) or not addr]
     return consoles
 
 
@@ -114,32 +115,30 @@ async def console_status(
     status = console.console_status
     # Update Title Info, if authorization data is available
     if xbl_client and status:
-        for t in status.active_titles:
-            try:
-                title_id = t.title_id
-                resp = singletons.title_cache.get(title_id)
-                if not resp:
-                    resp = await xbl_client.titlehub.get_title_info(title_id, 'image')
-                if resp.titles[0]:
-                    singletons.title_cache[title_id] = resp
-                    t.name = resp.titles[0].name
-                    t.image = resp.titles[0].display_image
-                    t.type = resp.titles[0].type
-            except Exception:
-                pass
+        async with aiohttp.ClientSession() as http_session:
+            xbl_client.session._auth_mgr.session = http_session
+            for t in status.active_titles:
+                try:
+                    title_id = t.title_id
+                    resp = singletons.title_cache.get(title_id)
+                    if not resp:
+                        resp = await xbl_client.titlehub.get_title_info(title_id, 'image')
+                    if resp.titles[0]:
+                        singletons.title_cache[title_id] = resp
+                        t.name = resp.titles[0].name
+                        t.image = resp.titles[0].display_image
+                        t.type = resp.titles[0].type
+                except Exception:
+                    pass
     return status
 
 
-@router.get('/{liveid}/launch/{app_id}', response_model=schemas.GeneralResponse)
+@router.get('/{liveid}/launch/{app_id}', response_model=schemas.GeneralResponse, deprecated=True)
 async def launch_title(
     console: ConsoleWrap = Depends(console_connected),
     *,
     app_id: str
 ):
-    raise HTTPException(
-        status_code=400,
-        detail='Launch app functionality is not supported anymore'
-    )
     await console.launch_title(app_id)
     return schemas.GeneralResponse(success=True, details={'launched': app_id})
 
@@ -242,16 +241,6 @@ async def media_command(
         raise HTTPException(status_code=400, detail=f'Seek command requires seek_position argument')
 
     await console.send_media_command(cmd, seek_position=seek_position)
-    return schemas.GeneralResponse(success=True)
-
-
-@router.get('/{liveid}/media/seek/{seek_position}', response_model=schemas.GeneralResponse)
-async def media_command_seek(
-    console: ConsoleWrap = Depends(console_connected),
-    *,
-    seek_position: int
-):
-    await console.send_media_command(enum.MediaControlCommand.Seek, seek_position)
     return schemas.GeneralResponse(success=True)
 
 
