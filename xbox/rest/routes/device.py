@@ -1,13 +1,16 @@
 from typing import Optional
+from xbox.rest.schemas.auth import AuthenticationStatus, auth
 
 from fastapi import APIRouter, Depends, HTTPException
 from http import HTTPStatus
+
+from xbox.webapi.api.client import XboxLiveClient
 from xbox.sg import enum
 from xbox.stump import json_model as stump_schemas
 
-from ..deps import console_exists, console_connected
+from .. import schemas, singletons
+from ..deps import console_exists, console_connected, get_xbl_client, get_authorization
 from ..consolewrap import ConsoleWrap
-from .. import schemas
 
 
 router = APIRouter()
@@ -18,25 +21,25 @@ async def device_overview(addr: Optional[str] = None):
     discovered = discovered.copy()
 
     liveids = [d.liveid for d in discovered]
-    for i, c in enumerate(app.console_cache.values()):
+    for i, c in enumerate(singletons.console_cache.values()):
         if c.liveid in liveids:
             # Refresh existing entries
             index = liveids.index(c.liveid)
 
             if c.device_status != discovered[index].device_status:
-                app.console_cache[c.liveid] = ConsoleWrap(discovered[index])
+                singletons.console_cache[c.liveid] = ConsoleWrap(discovered[index])
             del discovered[index]
             del liveids[index]
         elif c.liveid not in liveids:
             # Set unresponsive consoles to Unavailable
-            app.console_cache[c.liveid].console.device_status = enum.DeviceStatus.Unavailable
+            singletons.console_cache[c.liveid].console.device_status = enum.DeviceStatus.Unavailable
 
     # Extend by new entries
     for d in discovered:
-        app.console_cache.update({d.liveid: ConsoleWrap(d)})
+        singletons.console_cache.update({d.liveid: ConsoleWrap(d)})
 
     # Filter for specific console when ip address query is supplied (if available)
-    data = {console.liveid: console.status for console in app.console_cache.values()
+    data = {console.liveid: console.status for console in singletons.console_cache.values()
             if (addr and console.status.get('address') == addr) or not addr}
     return schemas.DeviceOverviewResponse(devices=data)
 
@@ -62,14 +65,15 @@ def device_info(
 @router.get('/{liveid}/connect', response_model=schemas.GeneralResponse)
 async def force_connect(
     console: ConsoleWrap = Depends(console_exists),
-    anonymous: Optional[bool] = True
+    authentication_data: AuthenticationStatus = Depends(get_authorization)
 ):
     try:
         userhash = ''
         xtoken = ''
-        if app.authentication_mgr.authenticated and not anonymous:
-            userhash = app.authentication_mgr.userinfo.userhash
-            xtoken = app.authentication_mgr.xsts_token.jwt
+        if authentication_data:
+            userhash = authentication_data.xsts.userhash
+            xtoken = authentication_data.xsts.token
+
         state = await console.connect(userhash, xtoken)
     except Exception as e:
         raise HTTPException(status_code=400, detail=f'error: {str(e)}')
@@ -105,20 +109,20 @@ async def poweroff(
 
 @router.get('/{liveid}/console_status', response_model=schemas.ConsoleStatusResponse)
 async def console_status(
-    console: ConsoleWrap = Depends(console_connected)
+    console: ConsoleWrap = Depends(console_connected),
+    xbl_client: XboxLiveClient = Depends(get_xbl_client)
 ):
     status = console.console_status
-    client = app.xbl_client
-    # Update Title Info
-    if client and status:
+    # Update Title Info, if authorization data is available
+    if xbl_client and status:
         for t in status.active_titles:
             try:
                 title_id = t.title_id
-                resp = app.title_cache.get(title_id)
+                resp = singletons.title_cache.get(title_id)
                 if not resp:
-                    resp = await client.titlehub.get_title_info(title_id, 'image')
+                    resp = await xbl_client.titlehub.get_title_info(title_id, 'image')
                 if resp.titles[0]:
-                    app.title_cache[title_id] = resp
+                    singletons.title_cache[title_id] = resp
                     t.name = resp.titles[0].name
                     t.image = resp.titles[0].display_image
                     t.type = resp.titles[0].type
@@ -133,6 +137,10 @@ async def launch_title(
     *,
     app_id: str
 ):
+    raise HTTPException(
+        status_code=400,
+        detail='Launch app functionality is not supported anymore'
+    )
     await console.launch_title(app_id)
     return schemas.GeneralResponse(success=True, details={'launched': app_id})
 
@@ -155,7 +163,7 @@ def infrared(
         button_links = {}
         for button in device_config.buttons:
             button_links[button] = schemas.InfraredButton(
-                url='/device/{0}/ir/{1}/{2}'.format(console.liveid, device_config.device_id, button),
+                url=f'/device/{console.liveid}/ir/{device_config.device_id}/{button}',
                 value=device_config.buttons[button]
             )
 
@@ -185,7 +193,7 @@ def infrared_available_keys(
         button_links = {}
         for button in device_config.buttons:
             button_links[button] = schemas.InfraredButton(
-                url='/device/{0}/ir/{1}/{2}'.format(console.liveid, device_config.device_id, button),
+                url=f'/device/{console.liveid}/ir/{device_config.device_id}/{button}',
                 value=device_config.buttons[button]
             )
 

@@ -1,29 +1,48 @@
-from typing import Tuple
+from typing import Tuple, Optional
 
-from fastapi import Query, Header
-from http import HTTPStatus
+from fastapi import Query, Header, HTTPException, status
+from xbox.webapi.api.language import DefaultXboxLiveLanguages, XboxLiveLanguage
+
+from . import singletons
+from .common import generate_authentication_status
+from .schemas.auth import AuthenticationStatus
+
+from xbox.webapi.api.client import XboxLiveClient
+
 
 def console_connected(liveid: str):
-    console = app.console_cache.get(liveid)
+    console = singletons.console_cache.get(liveid)
     if not console:
-        return app.error('Console {0} is not alive'.format(liveid), HTTPStatus.FORBIDDEN)
+        raise HTTPException(status_code=400, detail=f'Console {liveid} is not alive')
     elif not console.connected:
-        return app.error('Console {0} is not connected'.format(liveid), HTTPStatus.FORBIDDEN)
+        raise HTTPException(status_code=400, detail=f'Console {liveid} is not connected')
     return console
 
 
 def console_exists(liveid: str):
-    console = app.console_cache.get(liveid)
+    console = singletons.console_cache.get(liveid)
     if not console:
-        return app.error('Console info for {0} is not available'.format(liveid), HTTPStatus.FORBIDDEN)
+        raise HTTPException(status_code=400, detail=f'Console info for {liveid} is not available')
 
     return console
 
+def get_xbl_client() -> Optional[XboxLiveClient]:
+    if not singletons.authentication_manager:
+        return None
 
-def require_authentication(
-    auth_header: str = Header(default=None, alias='Authorization')
-) -> Tuple[str, str]:
-    return 'userhash', 'jwt'
+    return XboxLiveClient(
+        singletons.authentication_manager,
+        DefaultXboxLiveLanguages.United_States
+    )
 
-def require_xbl_client():
-    return None
+def get_authorization(
+    anonymous: Optional[bool] = Query()
+) -> Optional[AuthenticationStatus]:
+    if anonymous:
+        return None
+    elif not singletons.authentication_manager:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail='Authorization data not available'
+        )
+    return generate_authentication_status(singletons.authentication_manager)

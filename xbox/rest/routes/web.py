@@ -1,6 +1,6 @@
 from typing import Optional
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, status
 from ..deps import require_xbl_client
 
 from xbox.webapi.api.client import XboxLiveClient
@@ -9,12 +9,15 @@ from xbox.webapi.api.provider.lists import models as lists_models
 
 router = APIRouter()
 
-@router.get('/title/<title_id>', response_model=titlehub_models.Title)
+@router.get('/title/{title_id}', response_model=titlehub_models.Title)
 async def download_title_info(
     client: XboxLiveClient = Depends(require_xbl_client),
     *,
     title_id: int
 ):
+    if not client:
+        raise HTTPException(status_code=status.HTTP_404_NOTFOUND, detail='Authorization not available')
+
     try:
         resp = await client.titlehub.get_title_info(title_id, 'image')
         return resp.titles[0]
@@ -32,7 +35,7 @@ async def download_title_history(
     max_items: Optional[int] = 5
 ):
     try:
-        resp = await client.titlehub.get_title_history(app.xbl_client.xuid, max_items=max_items)
+        resp = await client.titlehub.get_title_history(client.xuid, max_items=max_items)
         return resp
     except Exception as e:
         return HTTPException(status_code=400, detail=f'Download of titlehistory failed, error: {e}')
@@ -43,7 +46,7 @@ async def download_pins(
     client: XboxLiveClient = Depends(require_xbl_client)
 ):
     try:
-        resp = await client.lists.get_items(app.xbl_client.xuid, {})
+        resp = await client.lists.get_items(client.xuid, {})
         return resp
     except Exception as e:
         return HTTPException(status_code=400, detail=f'Download of pins failed, error: {e}')
