@@ -37,7 +37,8 @@ setup(
         'pydantic==1.6.1',
         'aioconsole==0.3.0',
         'fastapi==0.61.1',
-        'uvicorn==0.12.2'
+        'uvicorn==0.12.2',
+        'urwid==2.1.2'
     ],
     setup_requires=['pytest-runner'],
     tests_require=['pytest', 'pytest-console-scripts', 'pytest-asyncio'],
