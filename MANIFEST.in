@@ -2,8 +2,6 @@ include CHANGELOG.md
 include LICENSE
 include README.md
 
-recursive-include xbox/rest/templates *
-recursive-include xbox/rest/static *
 recursive-include tests *
 recursive-exclude * __pycache__
 recursive-exclude * *.py[co]

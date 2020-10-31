@@ -1,5 +1,13 @@
 # CHANGELOG
 
+## 2.0.0 (2020-xx-xx)
+
+* Drop Python 3.6 support
+* Major rewrite (Migration from gevent -> asyncio)
+* Rewrite of REST Server (Migration FLASK -> FastAPI)
+* Adjust to xbox-webapi-python v2.0.8
+* New OAUTH login flow
+
 ## 1.2.1  (2020-03-04)
 
 * cli: Python3.6 compatibility change
