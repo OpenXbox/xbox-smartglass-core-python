@@ -28,13 +28,8 @@ def console_exists(liveid: str):
 
 
 async def get_xbl_client() -> Optional[XboxLiveClient]:
-    if not singletons.authentication_manager:
-        return None
+    return singletons.xbl_client
 
-    return XboxLiveClient(
-        singletons.authentication_manager,
-        DefaultXboxLiveLanguages.United_States
-    )
 
 def get_authorization(
     anonymous: Optional[bool] = Query(default=True)

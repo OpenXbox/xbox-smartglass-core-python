@@ -1,19 +1,21 @@
-import aiohttp
+import logging
 from typing import Optional, List
-from xbox.rest.schemas.auth import AuthenticationStatus
 
 from fastapi import APIRouter, Depends, HTTPException
-
-from xbox.webapi.api.client import XboxLiveClient
-from xbox.sg import enum
-from xbox.stump import json_model as stump_schemas
 
 from .. import schemas, singletons
 from ..deps import console_exists, console_connected, get_xbl_client, get_authorization
 from ..consolewrap import ConsoleWrap
 
+from xbox.webapi.api.client import XboxLiveClient
+from xbox.webapi.api.provider.titlehub import TitleFields
+from xbox.sg import enum
+from xbox.stump import json_model as stump_schemas
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
+
 
 @router.get('/', response_model=List[schemas.DeviceStatusResponse])
 async def device_overview(addr: Optional[str] = None):
@@ -65,7 +67,7 @@ def device_info(
 @router.get('/{liveid}/connect', response_model=schemas.GeneralResponse)
 async def force_connect(
     console: ConsoleWrap = Depends(console_exists),
-    authentication_data: AuthenticationStatus = Depends(get_authorization)
+    authentication_data: schemas.AuthenticationStatus = Depends(get_authorization)
 ):
     try:
         userhash = ''
@@ -115,21 +117,19 @@ async def console_status(
     status = console.console_status
     # Update Title Info, if authorization data is available
     if xbl_client and status:
-        async with aiohttp.ClientSession() as http_session:
-            xbl_client.session._auth_mgr.session = http_session
-            for t in status.active_titles:
-                try:
-                    title_id = t.title_id
-                    resp = singletons.title_cache.get(title_id)
-                    if not resp:
-                        resp = await xbl_client.titlehub.get_title_info(title_id, 'image')
-                    if resp.titles[0]:
-                        singletons.title_cache[title_id] = resp
-                        t.name = resp.titles[0].name
-                        t.image = resp.titles[0].display_image
-                        t.type = resp.titles[0].type
-                except Exception:
-                    pass
+        for t in status.active_titles:
+            try:
+                title_id = t.title_id
+                resp = singletons.title_cache.get(title_id)
+                if not resp:
+                    resp = await xbl_client.titlehub.get_title_info(title_id, [TitleFields.IMAGE])
+                if resp.titles[0]:
+                    singletons.title_cache[title_id] = resp
+                    t.name = resp.titles[0].name
+                    t.image = resp.titles[0].display_image
+                    t.type = resp.titles[0].type
+            except Exception as e:
+                logger.exception(f'Failed to download title metadata for AUM: {t.aum}', exc_info=e)
     return status
 
 

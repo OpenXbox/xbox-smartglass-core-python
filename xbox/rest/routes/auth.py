@@ -1,25 +1,23 @@
 import secrets
 import aiohttp
 
-from typing import Optional, List
+from typing import Optional
 from fastapi import APIRouter, HTTPException, status
 from fastapi.responses import RedirectResponse
-from http import HTTPStatus
 
-from .. import singletons
+from .. import singletons, schemas
 from ..common import generate_authentication_status, generate_authentication_manager
-from ..schemas.general import GeneralResponse
-from ..schemas.auth import AuthenticationStatus, AuthSessionConfig
 
 from xbox.webapi.scripts import CLIENT_ID, CLIENT_SECRET
+from xbox.webapi.api.client import XboxLiveClient
 
 router = APIRouter()
 
 
-@router.get('/', response_model=AuthenticationStatus)
+@router.get('/', response_model=schemas.AuthenticationStatus)
 def authentication_overview():
     if not singletons.authentication_manager:
-        raise HTTPException(status_code=404, detail='Authorization not done')
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail='You have to login first')
 
     return generate_authentication_status(singletons.authentication_manager)
 
@@ -34,7 +32,7 @@ async def xboxlive_login(
     if scopes:
         scopes = scopes.split(',')
 
-    auth_session_config = AuthSessionConfig(
+    auth_session_config = schemas.AuthSessionConfig(
         client_id=client_id,
         client_secret=client_secret,
         redirect_uri=redirect_uri,
@@ -79,18 +77,21 @@ async def xboxlive_login_callback(
         )
 
     # Construct authentication manager that will be cached
-    async with aiohttp.ClientSession() as http_session:
-        auth_mgr = generate_authentication_manager(auth_session_config, http_session)
-        await auth_mgr.request_tokens(code)
-    
+    auth_mgr = generate_authentication_manager(
+        auth_session_config,
+        singletons.http_session
+    )
+    await auth_mgr.request_tokens(code)
+
     singletons.authentication_manager = auth_mgr
+    singletons.xbl_client = XboxLiveClient(singletons.authentication_manager)
     return RedirectResponse(url='/auth')
 
 
 @router.get('/refresh', status_code=status.HTTP_307_TEMPORARY_REDIRECT)
 async def refresh_tokens():
     if not singletons.authentication_manager:
-        raise HTTPException(status_code=404, detail='Authorization not done')
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail='You have to login first')
 
     async with aiohttp.ClientSession() as http_session:
         singletons.authentication_manager.session = http_session
@@ -101,7 +102,7 @@ async def refresh_tokens():
     return RedirectResponse(url='/auth')
 
 
-@router.get('/logout', response_model=GeneralResponse)
+@router.get('/logout', response_model=schemas.GeneralResponse)
 async def xboxlive_logout():
     singletons.authentication_manager = None
-    return GeneralResponse(success=True)
+    return schemas.GeneralResponse(success=True)

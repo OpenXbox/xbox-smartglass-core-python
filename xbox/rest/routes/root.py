@@ -1,10 +1,10 @@
 from fastapi import APIRouter
-from ..schemas import root
-from .. import SMARTGLASS_PACKAGENAMES
+from .. import schemas, SMARTGLASS_PACKAGENAMES
 
 router = APIRouter()
 
-@router.get('/', response_model=root.IndexResponse)
+
+@router.get('/', response_model=schemas.IndexResponse)
 def get_index():
     import pkg_resources
 
@@ -15,7 +15,7 @@ def get_index():
         except Exception:
             versions[name] = None
 
-    return root.IndexResponse(
+    return schemas.IndexResponse(
         versions=versions,
         doc_path='/docs'
     )
