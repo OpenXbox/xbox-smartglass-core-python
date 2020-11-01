@@ -180,4 +180,5 @@ Before you submit a pull request, check that it meets these guidelines:
 Kudos to [joelday](https://github.com/joelday) for figuring out the AuxiliaryStream / TitleChannel communication first!
 You can find the original implementation here: [SmartGlass.CSharp](https://github.com/OpenXbox/Xbox-Smartglass-csharp)
 
-This package uses parts of [Cookiecutter](https://github.com/audreyr/cookiecutter) and the [audreyr/cookiecutter-pypackage project template](https://github.com/audreyr/cookiecutter-pypackage)
+This package uses parts of [Cookiecutter](https://github.com/audreyr/cookiecutter) and the
+[audreyr/cookiecutter-pypackage project template](https://github.com/audreyr/cookiecutter-pypackage)
