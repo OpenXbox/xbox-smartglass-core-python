@@ -5,7 +5,7 @@ from setuptools import setup, find_namespace_packages
 
 setup(
     name="xbox-smartglass-core",
-    version="1.2.2",
+    version="1.3.0",
     author="OpenXbox",
     author_email="noreply@openxbox.org",
     description="A library to interact with the Xbox One gaming console via the SmartGlass protocol.",
