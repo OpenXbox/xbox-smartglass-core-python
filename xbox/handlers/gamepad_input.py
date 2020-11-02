@@ -67,7 +67,7 @@ def get_getch_func():
         return getch
 
 
-def input_loop(console):
+async def input_loop(console):
     getch = get_getch_func()
     while True:
         ch = getch()
@@ -79,6 +79,6 @@ def input_loop(console):
             continue
 
         button = input_map[ch]
-        console.gamepad_input(button)
-        console.wait(0.1)
-        console.gamepad_input(GamePadButton.Clear)
+        await console.gamepad_input(button)
+        await console.wait(0.1)
+        await console.gamepad_input(GamePadButton.Clear)
