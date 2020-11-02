@@ -559,6 +559,13 @@ async def main_async(loop: asyncio.AbstractEventLoop, command: Commands = None) 
         console.text.on_systemtext_input += functools.partial(text_input.on_text_input, console)
         console.text.on_systemtext_done += text_input.on_text_done
 
+        while True:
+            try:
+                await asyncio.sleep(1)
+            except KeyboardInterrupt:
+                print('Quitting text input handler')
+                return ExitCodes.OK
+
 
 def main(command: Commands = None):
     LOGGER.debug('Entering main_async')
