@@ -35,6 +35,7 @@ Example:
             print("No consoles discovered")
             sys.exit(1)
 """
+import asyncio
 import time
 import logging
 from typing import Optional
@@ -456,8 +457,12 @@ class TextManager(Manager):
             # Assign console input msg
             self.current_session_input = payload
             self.current_text_version = payload.submitted_version
-            self.send_systemtext_ack(self.text_session_id,
-                                     self.current_text_version)
+            asyncio.create_task(
+                self.send_systemtext_ack(
+                    self.text_session_id,
+                    self.current_text_version
+                )
+            )
             self.on_systemtext_input(payload)
 
         elif msg_type == MessageType.SystemTextAck:
