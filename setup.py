@@ -30,7 +30,7 @@ setup(
     ],
     test_suite="tests",
     install_requires=[
-        'xbox-webapi==2.0.8',
+        'xbox-webapi==2.0.9',
         'construct==2.10.56',
         'cryptography==3.2.1',
         'dpkt==1.9.4',
