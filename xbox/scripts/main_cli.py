@@ -386,12 +386,14 @@ async def main_async(loop: asyncio.AbstractEventLoop, command: Commands = None) 
         Do Xbox live authentication
         """
         LOGGER.debug('Command {0} supports authenticated connection'.format(command))
+        print('Authenticating...')
         try:
             auth_manager = await do_authentication(args)
         except AuthenticationException:
             LOGGER.exception('Authentication failed!')
             LOGGER.error("Please re-run xbox-authenticate to get a fresh set")
             sys.exit(ExitCodes.AuthenticationError)
+        print('Authentication done')
 
     if command == Commands.TUI:
         """
