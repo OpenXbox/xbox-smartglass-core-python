@@ -98,6 +98,40 @@ def test_connect_request(packets, crypto):
     assert len(packed) == len(packets[bin_name])
     assert packed == packets[bin_name]
 
+def test_connect_request_anonymous(packets, crypto):
+    bin_name = 'connect_request_anonymous'
+    msg = factory.connect(
+        sg_uuid=uuid.UUID('{de305d54-75b4-431b-adb2-eb6b9e546014}'),
+        public_key_type=enum.PublicKeyType.EC_DH_P256,
+        public_key=b'\xFF' * 64,
+        iv=unhexlify('2979d25ea03d97f58f46930a288bf5d2'),
+        userhash='',
+        jwt='',
+        msg_num=0,
+        num_start=0,
+        num_end=1
+    )
+    packed = _pack(msg, crypto)
+
+    assert msg.header.pkt_type == enum.PacketType.ConnectRequest
+
+    assert str(msg.unprotected_payload.sg_uuid) == 'de305d54-75b4-431b-adb2-eb6b9e546014'
+    assert msg.unprotected_payload.public_key_type == enum.PublicKeyType.EC_DH_P256
+    assert msg.unprotected_payload.public_key == b'\xFF' * 64
+    assert msg.unprotected_payload.iv == unhexlify(
+        '2979d25ea03d97f58f46930a288bf5d2'
+    )
+
+    assert msg.protected_payload.userhash == ''
+    assert msg.protected_payload.jwt == ''
+    assert msg.protected_payload.connect_request_num == 0
+    assert msg.protected_payload.connect_request_group_start == 0
+    assert msg.protected_payload.connect_request_group_end == 1
+
+    import binascii
+    print(binascii.hexlify(packed))
+    assert len(packed) == len(packets[bin_name])
+    assert packed == packets[bin_name]
 
 def test_message_fragment(packets, crypto):
     data = unhexlify(

@@ -63,6 +63,20 @@ def test_connect_request(packets, crypto):
     assert unpacked.protected_payload.connect_request_group_start == 0
     assert unpacked.protected_payload.connect_request_group_end == 2
 
+def test_connect_request_anonymous(packets, crypto):
+    unpacked = _unpack(packets['connect_request_anonymous'], crypto)
+    assert unpacked.header.pkt_type == enum.PacketType.ConnectRequest
+    assert unpacked.header.unprotected_payload_length == 98
+    assert unpacked.header.protected_payload_length == 18
+    assert unpacked.header.version == 2
+    assert str(unpacked.unprotected_payload.sg_uuid) == 'de305d54-75b4-431b-adb2-eb6b9e546014'
+    assert unpacked.unprotected_payload.public_key == b'\xff' * 64
+    assert unpacked.unprotected_payload.iv == unhexlify('2979d25ea03d97f58f46930a288bf5d2')
+    assert unpacked.protected_payload.userhash == ''
+    assert unpacked.protected_payload.jwt == ''
+    assert unpacked.protected_payload.connect_request_num == 0
+    assert unpacked.protected_payload.connect_request_group_start == 0
+    assert unpacked.protected_payload.connect_request_group_end == 1
 
 def test_connect_response(packets, crypto):
     unpacked = _unpack(packets['connect_response'], crypto)
