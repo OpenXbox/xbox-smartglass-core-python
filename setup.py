@@ -34,7 +34,7 @@ setup(
         'construct==2.10.56',
         'cryptography==3.3.2',
         'dpkt==1.9.4',
-        'pydantic==1.7.1',
+        'pydantic==1.7.4',
         'aioconsole==0.3.0',
         'fastapi==0.61.1',
         'uvicorn==0.12.2',
